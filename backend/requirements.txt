@@ -2,7 +2,7 @@ fastapi
 uvicorn
 gunicorn
 tensorflow-cpu
-numpy
+numpy<2.0.0
 pillow
 scikit-learn
 python-multipart
