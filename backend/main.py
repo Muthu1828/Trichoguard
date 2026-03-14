@@ -12,9 +12,15 @@ from fastapi.staticfiles import StaticFiles
 app = FastAPI()
 
 # Allow frontend connection
+origins = [
+    "https://trichoguard.vercel.app",
+    "https://trichoguard-muthu1828s-projects.vercel.app",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Fallback wildcard
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,8 +30,13 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load models with absolute paths
+print("DEBUG: Loading scalp model...")
 image_model = tf.keras.models.load_model(os.path.join(BASE_DIR, "scalp_model.h5"))
+print("DEBUG: Scalp model loaded successfully.")
+
+print("DEBUG: Loading lifestyle model...")
 lifestyle_model = joblib.load(os.path.join(BASE_DIR, "lifestyle_model.pkl"))
+print("DEBUG: Lifestyle model loaded successfully.")
 
 @app.get("/")
 async def health():
@@ -51,6 +62,7 @@ async def predict(
     drinking: str = Form(...),
     familyHistory: str = Form(...)
 ):
+    print(f"DEBUG: New prediction request received. User Age: {age}, Gender: {gender}")
 
     # -------- IMAGE PREDICTION --------
     contents = await image.read()
