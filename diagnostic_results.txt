@@ -1,0 +1,28 @@
+
+Testing folder: healthy_scalp
+  Image: download.jpg -> Predicted Index: 0 (Healthy) | Conf: 1.00
+  Image: e9132abdd354a579b322331d773591a2.jpg -> Predicted Index: 0 (Healthy) | Conf: 1.00
+  Image: ec577fcefe40fb8884a3c847a27f2055.jpg -> Predicted Index: 0 (Healthy) | Conf: 1.00
+  Image: edb78b0ecd23bab5160a753897676c594.jpg -> Predicted Index: 0 (Healthy) | Conf: 0.60
+  Image: ef0d3ee6de03ae350d0fa7062a6931fb.jpg -> Predicted Index: 0 (Healthy) | Conf: 1.00
+
+Testing folder: mild_scalp
+  Image: IMG-20260306-WA0001.jpg -> Predicted Index: 0 (Healthy) | Conf: 1.00
+  Image: IMG-20260306-WA0004.jpg -> Predicted Index: 2 (Moderate) | Conf: 0.90
+  Image: IMG-20260306-WA0008.jpg -> Predicted Index: 3 (Severe) | Conf: 1.00
+  Image: IMG-20260306-WA0015.jpg -> Predicted Index: 2 (Moderate) | Conf: 0.72
+  Image: IMG-20260306-WA0017.jpg -> Predicted Index: 0 (Healthy) | Conf: 1.00
+
+Testing folder: moderate_scalp
+  Image: IMG-20260306-WA0006.jpg -> Predicted Index: 2 (Moderate) | Conf: 0.99
+  Image: IMG-20260306-WA0007.jpg -> Predicted Index: 2 (Moderate) | Conf: 0.98
+  Image: IMG-20260306-WA0010.jpg -> Predicted Index: 3 (Severe) | Conf: 1.00
+  Image: IMG-20260306-WA0012.jpg -> Predicted Index: 3 (Severe) | Conf: 0.64
+  Image: IMG-20260306-WA0019.jpg -> Predicted Index: 2 (Moderate) | Conf: 1.00
+
+Testing folder: severe_scalp
+  Image: IMG-20260306-WA0002.jpg -> Predicted Index: 0 (Healthy) | Conf: 0.98
+  Image: IMG-20260306-WA0009.jpg -> Predicted Index: 3 (Severe) | Conf: 0.91
+  Image: IMG-20260306-WA0013.jpg -> Predicted Index: 3 (Severe) | Conf: 1.00
+  Image: IMG-20260306-WA0014.jpg -> Predicted Index: 3 (Severe) | Conf: 1.00
+  Image: IMG-20260306-WA0023.jpg -> Predicted Index: 3 (Severe) | Conf: 0.99

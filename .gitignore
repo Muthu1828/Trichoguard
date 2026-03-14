@@ -1,0 +1,39 @@
+# Node
+node_modules/
+.next/
+out/
+build/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+backend/dist/
+backend/build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Environment / Secrets
+.env
+.env.local
+.env.production
+*.env
+
+# Data & Models
+# If models are huge, exclude and use LFS, but for basic deployment we usually include them
+# backend/models/*.h5
+# backend/models/*.pkl
+
+# Temp & Logs
+tmp_*
+*.log
+error.log
+error_*.log
+
+# Workspace
+.gemini/
+.agent/
+brain/
