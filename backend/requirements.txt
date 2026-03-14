@@ -3,6 +3,8 @@ uvicorn
 gunicorn
 tensorflow-cpu
 numpy<2.0.0
+pandas
+joblib
 pillow
 scikit-learn
 python-multipart
