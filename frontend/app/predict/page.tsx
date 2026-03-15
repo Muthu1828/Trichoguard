@@ -69,7 +69,9 @@ export default function AnalyzePage() {
       form.append("drinking", formData.drinking)
       form.append("familyHistory", formData.familyHistory)
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://trichoguard-1.onrender.com";
+      const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
+        ? "http://127.0.0.1:8001" 
+        : "https://trichoguard-1.onrender.com";
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
         body: form
