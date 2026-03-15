@@ -11,16 +11,9 @@ from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
-# Allow frontend connection
-origins = [
-    "https://trichoguard.vercel.app",
-    "https://trichoguard-muthu1828s-projects.vercel.app",
-    "http://localhost:3000",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
