@@ -9,6 +9,8 @@ export default function AnalyzePage() {
   const router = useRouter()
   const [step, setStep] = useState<1 | 2>(1)
   const [image, setImage] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [errorDetails, setErrorDetails] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     age: "",
@@ -52,11 +54,36 @@ export default function AnalyzePage() {
     }
 
     const form = new FormData()
+    setIsAnalyzing(true)
+    setErrorDetails(null)
+
+    const compressImage = async (imageSrc: string): Promise<Blob> => {
+      return new Promise((resolve) => {
+        const img = new (window as any).Image();
+        img.src = imageSrc;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 800; // Sufficient for 224px AI model
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.8);
+        };
+      });
+    };
 
     try {
-      const imgResponse = await fetch(image)
-      const blob = await imgResponse.blob()
-      form.append("image", blob, "scalp.jpg")
+      const compressedBlob = await compressImage(image);
+      form.append("image", compressedBlob, "scalp.jpg");
       form.append("age", formData.age)
       form.append("gender", formData.gender)
       form.append("stress", formData.stress.toString())
@@ -86,14 +113,27 @@ export default function AnalyzePage() {
       // Redirect to results (using Next.js router)
       router.push("/results")
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      alert("Backend connection failed")
+      setErrorDetails(error.message || "Failed to connect to AI server")
+      alert(`Backend connection failed: ${error.message || "Check your internet"}`)
+    } finally {
+      setIsAnalyzing(false)
     }
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-100 via-blue-100 to-teal-100 min-h-screen py-16 px-6">
+    <div className="bg-gradient-to-br from-gray-100 via-blue-100 to-teal-100 min-h-screen py-16 px-6 relative">
+      
+      {/* LOADING OVERLAY */}
+      {isAnalyzing && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white">
+          <div className="w-20 h-20 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(20,184,166,0.3)]"></div>
+          <h2 className="text-3xl font-bold mb-2">Analyzing Scalp...</h2>
+          <p className="text-teal-300 animate-pulse text-lg">AI Vision Engine is identifying hair patterns</p>
+          <p className="text-xs text-white/50 mt-10 max-w-xs text-center">Processing macroscopic follicle data. This may take up to 30 seconds on free-tier servers.</p>
+        </div>
+      )}
 
       {/* DYNAMIC HEADER */}
       <div className="text-center mb-12">
@@ -116,6 +156,14 @@ export default function AnalyzePage() {
             </p>
           </>
         )}
+      </div>
+
+      {/* QUICK STATUS INDICATOR */}
+      <div className="max-w-3xl mx-auto mb-6 flex justify-end">
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs font-medium text-gray-500 shadow-sm">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          AI Server Link: <span className="text-teal-600">Active</span>
+        </div>
       </div>
 
       <div className={`max-w-6xl mx-auto flex flex-col items-center ${step === 2 ? "grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch" : ""}`}>
