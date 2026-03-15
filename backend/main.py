@@ -29,19 +29,32 @@ app.add_middleware(
 # Get base path for models
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Load models with absolute paths
-print("DEBUG: Loading scalp model...")
-image_model = tf.keras.models.load_model(os.path.join(BASE_DIR, "scalp_model.h5"))
-print("DEBUG: Scalp model loaded successfully.")
+# Global model containers
+image_model = None
+lifestyle_model = None
 
-print("DEBUG: Loading lifestyle model...")
-lifestyle_model = joblib.load(os.path.join(BASE_DIR, "lifestyle_model.pkl"))
-print("DEBUG: Lifestyle model loaded successfully.")
+@app.on_event("startup")
+async def load_models():
+    global image_model, lifestyle_model
+    try:
+        print("DEBUG: Loading scalp model (compile=False)...")
+        image_model = tf.keras.models.load_model(
+            os.path.join(BASE_DIR, "scalp_model.h5"), 
+            compile=False
+        )
+        print("DEBUG: Scalp model loaded successfully.")
+
+        print("DEBUG: Loading lifestyle model...")
+        lifestyle_model = joblib.load(os.path.join(BASE_DIR, "lifestyle_model.pkl"))
+        print("DEBUG: Lifestyle model loaded successfully.")
+    except Exception as e:
+        print(f"CRITICAL: Model loading failed! {str(e)}")
 
 @app.get("/")
 @app.head("/")
 async def health():
-    return {"status": "ok", "message": "TrichoGuard API is running"}
+    status = "ok" if image_model is not None else "loading"
+    return {"status": status, "message": "TrichoGuard API is running"}
 
 # Reversing classes based on user feedback of inverted results
 # Index 0 will now be Severe, Index 3 will be Healthy
