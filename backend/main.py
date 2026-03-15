@@ -20,7 +20,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Fallback wildcard
+    allow_origins=origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,6 +39,7 @@ lifestyle_model = joblib.load(os.path.join(BASE_DIR, "lifestyle_model.pkl"))
 print("DEBUG: Lifestyle model loaded successfully.")
 
 @app.get("/")
+@app.head("/")
 async def health():
     return {"status": "ok", "message": "TrichoGuard API is running"}
 
