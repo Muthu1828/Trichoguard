@@ -14,6 +14,7 @@ export default function AnalyzePage() {
   
   // Camera State
   const [showCamera, setShowCamera] = useState(false)
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment")
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -39,21 +40,32 @@ export default function AnalyzePage() {
     setImage(URL.createObjectURL(file))
   }
 
-  const startCamera = async () => {
+  const startCamera = async (mode: "user" | "environment" = facingMode) => {
     try {
       setShowCamera(true)
+      // Stop existing stream if any
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop())
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } // Prefer back camera on mobile
+        video: { facingMode: mode }
       })
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         streamRef.current = stream
       }
+      setFacingMode(mode)
     } catch (err) {
       console.error("Error accessing camera:", err)
       alert("Could not access camera. Please check permissions.")
       setShowCamera(false)
     }
+  }
+
+  const toggleCamera = () => {
+    const newMode = facingMode === "user" ? "environment" : "user"
+    startCamera(newMode)
   }
 
   const stopCamera = () => {
@@ -233,7 +245,7 @@ export default function AnalyzePage() {
                 </label>
 
                 <button
-                  onClick={startCamera}
+                  onClick={() => startCamera()}
                   className="border-2 border-dashed border-gray-300 rounded-2xl p-10 block hover:bg-gray-50 transition-all hover:border-teal-500 group"
                 >
                   <div className="mb-4 flex justify-center text-gray-400 group-hover:text-teal-500 transition-colors">
@@ -250,9 +262,18 @@ export default function AnalyzePage() {
                     ref={videoRef}
                     autoPlay
                     playsInline
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover ${facingMode === "user" ? "-scale-x-100" : ""}`}
                   />
                   <div className="absolute inset-0 border-2 border-white/20 pointer-events-none rounded-2xl"></div>
+                  
+                  {/* Camera Flip Button */}
+                  <button
+                    onClick={toggleCamera}
+                    className="absolute top-4 right-4 p-3 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all border border-white/30"
+                    title="Switch Camera"
+                  >
+                    <RefreshCw size={20} />
+                  </button>
                 </div>
                 <div className="flex gap-4">
                   <button

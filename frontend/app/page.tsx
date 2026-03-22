@@ -43,13 +43,13 @@ export default function Home() {
       </div>
 
       {/* HERO SECTION */}
-      <section className="relative z-10 flex flex-col items-center justify-center px-6 md:px-12 py-20 min-h-[90vh]">
-        <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-16 max-w-7xl w-full">
-          <div>
-            <div className="inline-block px-4 py-1.5 mb-6 text-sm font-bold tracking-wider text-teal-600 bg-teal-100 rounded-full">
+      <section className="relative z-10 flex flex-col items-center justify-center px-6 md:px-12 pt-12 md:pt-20 pb-20 min-h-[90vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10 lg:gap-16 max-w-7xl w-full">
+          <div className="text-center lg:text-left order-2 lg:order-1">
+            <div className="inline-block px-4 py-1.5 mb-6 text-xs md:text-sm font-bold tracking-wider text-teal-600 bg-teal-100 rounded-full">
               AI-POWERED DERMATOLOGICAL INTELLIGENCE
             </div>
-            <h1 className="text-5xl md:text-7xl font-black leading-[1.1] text-slate-900 tracking-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black leading-[1.1] text-slate-900 tracking-tight">
               Predict & <br />
               <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
                 Prevent Hair Loss
@@ -57,30 +57,30 @@ export default function Home() {
               Before It Starts
             </h1>
 
-            <p className="mt-8 text-slate-600 text-lg md:text-xl max-w-lg leading-relaxed font-medium">
+            <p className="mt-6 md:mt-8 text-slate-600 text-base md:text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium">
               TrichoGuard uses specialized deep learning to provide early detection, 
               personalized prevention strategies, and a path to hair confidence.
             </p>
 
-            <div className="mt-12 flex gap-6 flex-wrap">
+            <div className="mt-10 md:mt-12 flex flex-col sm:flex-row gap-4 md:gap-6 justify-center lg:justify-start flex-wrap">
               <Link
                 href="/predict"
-                className="px-10 py-5 rounded-3xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-bold shadow-2xl shadow-teal-300/30 hover:scale-105 active:scale-95 transition-all duration-300"
+                className="px-8 md:px-10 py-4 md:py-5 rounded-3xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-bold shadow-2xl shadow-teal-300/30 hover:scale-105 active:scale-95 transition-all duration-300 text-center"
               >
                 Scan My Scalp Now →
               </Link>
 
               <button 
                 onClick={scrollToHowItWorks}
-                className="px-10 py-5 rounded-3xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-white hover:border-teal-500 hover:text-teal-600 hover:shadow-lg transition-all duration-300"
+                className="px-8 md:px-10 py-4 md:py-5 rounded-3xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-white hover:border-teal-500 hover:text-teal-600 hover:shadow-lg transition-all duration-300"
               >
                 Explore Technology
               </button>
             </div>
           </div>
 
-          <div className="flex justify-center relative">
-            <div className="absolute inset-0 bg-blue-500/10 blur-[100px] scale-150 animate-pulse"></div>
+          <div className="flex justify-center relative order-1 lg:order-2 scale-75 md:scale-90 lg:scale-100 mb-8 lg:mb-0">
+            <div className="absolute inset-0 bg-blue-500/10 blur-[80px] scale-125 animate-pulse"></div>
             <FuturisticOrb />
           </div>
         </div>
