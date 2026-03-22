@@ -43,13 +43,15 @@ export default function Home() {
       </div>
 
       {/* HERO SECTION */}
-      <section className="relative z-10 flex flex-col items-center justify-center px-6 md:px-12 pt-12 md:pt-20 pb-20 min-h-[90vh]">
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10 lg:gap-16 max-w-7xl w-full">
-          <div className="text-center lg:text-left order-2 lg:order-1">
-            <div className="inline-block px-4 py-1.5 mb-6 text-xs md:text-sm font-bold tracking-wider text-teal-600 bg-teal-100 rounded-full">
+      <section className="relative z-10 flex flex-col items-center justify-center px-4 md:px-12 pt-12 md:pt-20 pb-20 min-h-[85vh] md:min-h-[90vh]">
+        <div className="flex flex-row items-center justify-between gap-4 md:gap-16 max-w-7xl w-full">
+          
+          {/* TEXT CONTENT */}
+          <div className="flex-1 text-left z-20">
+            <div className="inline-block px-3 py-1 mb-4 text-[10px] md:text-sm font-bold tracking-wider text-teal-600 bg-teal-100/80 rounded-full backdrop-blur-sm">
               AI-POWERED DERMATOLOGICAL INTELLIGENCE
             </div>
-            <h1 className="text-4xl md:text-5xl lg:text-7xl font-black leading-[1.1] text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-7xl font-black leading-[1.1] text-slate-900 tracking-tight">
               Predict & <br />
               <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
                 Prevent Hair Loss
@@ -57,32 +59,34 @@ export default function Home() {
               Before It Starts
             </h1>
 
-            <p className="mt-6 md:mt-8 text-slate-600 text-base md:text-xl max-w-lg mx-auto lg:mx-0 leading-relaxed font-medium">
-              TrichoGuard uses specialized deep learning to provide early detection, 
-              personalized prevention strategies, and a path to hair confidence.
+            <p className="mt-4 md:mt-8 text-slate-600 text-[12px] sm:text-base md:text-xl max-w-lg leading-relaxed font-medium">
+              TrichoGuard uses specialized deep learning to provide early detection 
+              and personalized prevention strategies.
             </p>
 
-            <div className="mt-10 md:mt-12 flex flex-col sm:flex-row gap-4 md:gap-6 justify-center lg:justify-start flex-wrap">
+            <div className="mt-8 md:mt-12 flex flex-col sm:flex-row gap-3 md:gap-6 flex-wrap">
               <Link
                 href="/predict"
-                className="px-8 md:px-10 py-4 md:py-5 rounded-3xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-bold shadow-2xl shadow-teal-300/30 hover:scale-105 active:scale-95 transition-all duration-300 text-center"
+                className="px-6 md:px-10 py-3 md:py-5 rounded-2xl md:rounded-3xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-bold shadow-xl shadow-teal-300/20 hover:scale-105 active:scale-95 transition-all duration-300 text-center text-sm md:text-base"
               >
-                Scan My Scalp Now →
+                Scan Now →
               </Link>
 
               <button 
                 onClick={scrollToHowItWorks}
-                className="px-8 md:px-10 py-4 md:py-5 rounded-3xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-white hover:border-teal-500 hover:text-teal-600 hover:shadow-lg transition-all duration-300"
+                className="px-6 md:px-10 py-3 md:py-5 rounded-2xl md:rounded-3xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-white hover:border-teal-500 hover:text-teal-600 hover:shadow-lg transition-all duration-300 text-sm md:text-base hidden sm:block"
               >
                 Explore Technology
               </button>
             </div>
           </div>
 
-          <div className="flex justify-center relative order-1 lg:order-2 scale-75 md:scale-90 lg:scale-100 mb-8 lg:mb-0">
-            <div className="absolute inset-0 bg-blue-500/10 blur-[80px] scale-125 animate-pulse"></div>
+          {/* ORB DECORATION */}
+          <div className="relative flex-shrink-0 w-32 sm:w-64 md:w-auto flex justify-center items-center py-4 scale-[0.6] sm:scale-75 md:scale-90 lg:scale-100 transition-transform duration-500">
+            <div className="absolute inset-0 bg-blue-500/10 blur-[60px] md:blur-[80px] scale-125 animate-pulse"></div>
             <FuturisticOrb />
           </div>
+
         </div>
       </section>
 
