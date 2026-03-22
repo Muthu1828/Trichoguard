@@ -18,6 +18,11 @@ export default function AnalyzePage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  
+  // Auto-scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [step])
 
   const [formData, setFormData] = useState({
     age: "",
@@ -334,24 +339,33 @@ export default function AnalyzePage() {
 
         {/* STEP 2 COMPONENT A: SMALL IMAGE PREVIEW (Left side in grid) */}
         {step === 2 && (
-           <div className="bg-white rounded-3xl shadow-xl p-8 text-center h-fit sticky top-10">
-              <h2 className="text-xl font-semibold mb-6 text-gray-800">
-                 Uploaded Image
-              </h2>
-              <div className="relative flex justify-center w-full max-w-[300px] aspect-square mx-auto rounded-xl overflow-hidden shadow-md border border-gray-100">
-                <Image
-                  src={image!}
-                  alt="Uploaded preview"
-                  fill
-                  className="object-cover"
-                />
+           <div className="lg:sticky lg:top-10 h-fit w-full lg:max-w-md">
+              <div className="bg-white rounded-3xl shadow-xl p-4 md:p-8 text-center border border-gray-100">
+                <div className="flex flex-row lg:flex-col items-center gap-4 lg:gap-0">
+                  <div className="relative shrink-0 w-20 h-20 lg:w-full lg:max-w-[300px] lg:aspect-square lg:mx-auto rounded-xl overflow-hidden shadow-md border border-gray-50 mb-0 lg:mb-6">
+                    <Image
+                      src={image!}
+                      alt="Uploaded preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="text-left lg:text-center flex-1">
+                    <h2 className="text-base lg:text-xl font-bold text-gray-800 lg:mb-2">
+                       Active Analysis
+                    </h2>
+                    <p className="text-[10px] lg:text-sm text-gray-500 mb-2 hidden lg:block">
+                      Lifestyle data provides context for the AI score
+                    </p>
+                    <button 
+                      onClick={() => setStep(1)}
+                      className="text-xs lg:text-sm text-blue-600 font-semibold hover:underline flex items-center gap-1 lg:justify-center"
+                    >
+                       <RefreshCw size={12} /> Change Image
+                    </button>
+                  </div>
+                </div>
               </div>
-              <button 
-                onClick={() => setStep(1)}
-                className="mt-6 text-sm text-blue-600 hover:underline"
-              >
-                 Recapture / Change Image
-              </button>
            </div>
         )}
 

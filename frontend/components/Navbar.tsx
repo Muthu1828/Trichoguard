@@ -2,8 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity } from "lucide-react"
-import { Stethoscope } from "lucide-react"
+import { Activity, Home, Stethoscope } from "lucide-react"
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -13,6 +12,10 @@ export default function Navbar() {
       <div className="bg-white shadow-xl rounded-2xl px-4 md:px-10 py-3 md:py-4 flex items-center justify-between w-[95%] md:w-[90%] max-w-6xl border border-gray-100">
 
         <div className="flex items-center gap-2 md:gap-3">
+          <Link href="/" className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Home">
+            <Home className="w-5 h-5 text-gray-500" />
+          </Link>
+
           <div className="bg-gradient-to-r from-teal-500 to-blue-500 p-1.5 md:p-2 rounded-lg shadow-md shrink-0">
             <Stethoscope className="text-white w-4 h-4 md:w-5 md:h-5" />
           </div>
