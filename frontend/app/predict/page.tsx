@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { X } from "lucide-react"
+import { X, Camera, RefreshCw, Check } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function AnalyzePage() {
@@ -11,6 +11,12 @@ export default function AnalyzePage() {
   const [image, setImage] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [errorDetails, setErrorDetails] = useState<string | null>(null)
+  
+  // Camera State
+  const [showCamera, setShowCamera] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
 
   const [formData, setFormData] = useState({
     age: "",
@@ -31,6 +37,45 @@ export default function AnalyzePage() {
     const file = e.target.files?.[0]
     if (!file) return
     setImage(URL.createObjectURL(file))
+  }
+
+  const startCamera = async () => {
+    try {
+      setShowCamera(true)
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } // Prefer back camera on mobile
+      })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        streamRef.current = stream
+      }
+    } catch (err) {
+      console.error("Error accessing camera:", err)
+      alert("Could not access camera. Please check permissions.")
+      setShowCamera(false)
+    }
+  }
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    setShowCamera(false)
+  }
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current
+      const canvas = canvasRef.current
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const ctx = canvas.getContext("2d")
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+      const dataUrl = canvas.toDataURL("image/jpeg")
+      setImage(dataUrl)
+      stopCamera()
+    }
   }
 
   const removeImage = () => {
@@ -168,26 +213,68 @@ export default function AnalyzePage() {
 
       <div className={`max-w-6xl mx-auto flex flex-col items-center ${step === 2 ? "grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch" : ""}`}>
         
-        {/* STEP 1: IMAGE UPLOAD */}
+        {/* STEP 1: IMAGE UPLOAD / CAMERA */}
         {step === 1 && (
           <div className="bg-white rounded-3xl shadow-xl p-12 text-center w-full max-w-3xl flex flex-col items-center justify-center min-h-[400px]">
-            {!image ? (
-              <label className="cursor-pointer border-2 border-dashed border-gray-300 rounded-xl p-16 block hover:bg-gray-50 transition w-full">
-                <p className="text-gray-500">
-                   Click to upload scalp image
-                </p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUpload}
-                  className="hidden"
-                />
-              </label>
+            {!image && !showCamera ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <label className="cursor-pointer border-2 border-dashed border-gray-300 rounded-2xl p-10 block hover:bg-gray-50 transition-all hover:border-teal-500 group">
+                  <div className="mb-4 flex justify-center text-gray-400 group-hover:text-teal-500 transition-colors">
+                    <RefreshCw size={48} className="animate-spin text-teal-500" />
+                  </div>
+                  <p className="text-gray-600 font-semibold mb-2">Upload From Device</p>
+                  <p className="text-gray-400 text-xs text-center">Select an existing photo</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUpload}
+                    className="hidden"
+                  />
+                </label>
+
+                <button
+                  onClick={startCamera}
+                  className="border-2 border-dashed border-gray-300 rounded-2xl p-10 block hover:bg-gray-50 transition-all hover:border-teal-500 group"
+                >
+                  <div className="mb-4 flex justify-center text-gray-400 group-hover:text-teal-500 transition-colors">
+                    <Camera size={48} />
+                  </div>
+                  <p className="text-gray-600 font-semibold mb-2">Take Live Photo</p>
+                  <p className="text-gray-400 text-xs text-center">Use your phone camera</p>
+                </button>
+              </div>
+            ) : showCamera ? (
+              <div className="w-full flex flex-col items-center">
+                <div className="relative w-full aspect-square max-w-sm rounded-2xl overflow-hidden shadow-2xl bg-black mb-6">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 border-2 border-white/20 pointer-events-none rounded-2xl"></div>
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={stopCamera}
+                    className="p-4 rounded-full bg-red-500 text-white shadow-lg hover:scale-110 transition"
+                  >
+                    <X size={24} />
+                  </button>
+                  <button
+                    onClick={capturePhoto}
+                    className="p-6 rounded-full bg-white border-8 border-teal-500 shadow-xl hover:scale-105 active:scale-95 transition"
+                  >
+                    <div className="w-6 h-6 bg-teal-500 rounded-full"></div>
+                  </button>
+                </div>
+                <canvas ref={canvasRef} className="hidden" />
+              </div>
             ) : (
-              <div className="flex flex-col items-center w-full">
+              <div className="flex flex-col items-center w-full animate-in fade-in zoom-in duration-300">
                 <div className="relative flex justify-center w-64 h-64 border-4 border-teal-500/20 rounded-2xl p-2 mb-6">
                   <Image
-                    src={image}
+                    src={image!}
                     alt="Uploaded"
                     fill
                     className="rounded-xl object-cover shadow-md"
@@ -199,9 +286,9 @@ export default function AnalyzePage() {
                     <X size={16} />
                   </button>
                 </div>
-                <p className="text-teal-600 font-medium flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Image Uploaded Successfully
-                </p>
+                <div className="bg-green-100 text-green-700 px-6 py-2 rounded-full font-medium flex items-center gap-2">
+                  <Check size={18} /> High-Resolution Capture Ready
+                </div>
               </div>
             )}
           </div>
@@ -298,20 +385,30 @@ export default function AnalyzePage() {
                 Health & Wellness
               </h2>
 
-              <div className="mb-4">
-                <label className="text-sm text-gray-600">
-                  Stress Level: {formData.stress}/10
+              <div className="mb-6">
+                <label className="text-sm font-medium text-gray-700 block mb-3">
+                  Current Stress Level
                 </label>
-
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  name="stress"
-                  value={formData.stress}
-                  onChange={handleChange}
-                  className="w-full"
-                />
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Relaxed", value: 2, color: "bg-green-100 text-green-700 border-green-200" },
+                    { label: "Moderate", value: 5, color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
+                    { label: "Intense", value: 9, color: "bg-red-100 text-red-700 border-red-200" }
+                  ].map((level) => (
+                    <button
+                      key={level.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, stress: level.value })}
+                      className={`p-3 rounded-xl border-2 transition-all ${
+                        formData.stress === level.value 
+                        ? `${level.color} border-teal-500 scale-105 shadow-md` 
+                        : "bg-gray-50 text-gray-400 border-transparent hover:border-gray-200"
+                      } text-sm font-semibold`}
+                    >
+                      {level.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="mb-4">
@@ -331,19 +428,25 @@ export default function AnalyzePage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-600">
-                  Water Intake: {formData.water} glasses/day
+                <label className="text-sm font-medium text-gray-700 block mb-2">
+                  Daily Water Intake: <span className="text-teal-600 font-bold">{formData.water}L</span>
                 </label>
 
                 <input
                   type="range"
-                  min="1"
-                  max="12"
+                  min="3.0"
+                  max="6.0"
+                  step="0.5"
                   name="water"
                   value={formData.water}
                   onChange={handleChange}
-                  className="w-full"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-teal-500"
                 />
+                <div className="flex justify-between text-[10px] text-gray-400 mt-1 uppercase tracking-wider font-bold">
+                  <span>3.0 Liters</span>
+                  <span>4.5 Liters</span>
+                  <span>6.0 Liters</span>
+                </div>
               </div>
 
             </div>

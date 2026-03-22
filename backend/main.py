@@ -61,7 +61,7 @@ async def predict(
     gender: str = Form(...),
     stress: int = Form(...),
     sleep: int = Form(...),
-    water: int = Form(...),
+    water: float = Form(...),
     diet: str = Form(...),
     exercise: str = Form(...),
     hairProduct: str = Form(...),
@@ -129,8 +129,10 @@ async def predict(
     if stress > 6: 
         reasons.append(f"STRESS (Level {stress}/10): High cortisol levels can prematurely trigger the shedding phase.")
     
-    if water < 5: 
-        reasons.append(f"HYDRATION ({water} glasses): Insufficient water intake makes hair fibers brittle and slows growth.")
+    if water < 3.5: 
+        reasons.append(f"HYDRATION ({water}L): Insufficient water intake makes hair fibers brittle and slows growth.")
+    elif water > 5.0:
+        reasons.append("Optimal Hydration: Continue drinking 5L+ daily to maintain hair elasticity and scalp health.")
     
     if sleep < 6: 
         reasons.append(f"SLEEP ({sleep} hrs): Inadequate rest prevents effective follicle cell regeneration.")
