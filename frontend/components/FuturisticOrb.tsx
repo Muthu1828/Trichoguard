@@ -11,8 +11,8 @@ export default function FuturisticOrb() {
     const handleMove = (e: MouseEvent) => {
       if (!orbRef.current) return
       const { clientX, clientY } = e
-      const x = (window.innerWidth / 2 - clientX) / 40
-      const y = (window.innerHeight / 2 - clientY) / 40
+      const x = (window.innerWidth / 2 - clientX) / 60 // Slightly reduced sensitivity
+      const y = (window.innerHeight / 2 - clientY) / 60
       orbRef.current.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`
     }
 
@@ -21,7 +21,7 @@ export default function FuturisticOrb() {
   }, [])
 
   return (
-    <div className="relative w-[520px] h-[520px] flex items-center justify-center">
+    <div className="relative w-full aspect-square flex items-center justify-center max-w-[520px] mx-auto">
 
       {/* PARTICLES */}
       <div className="absolute w-full h-full pointer-events-none">
