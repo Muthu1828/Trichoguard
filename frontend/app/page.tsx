@@ -92,8 +92,8 @@ export default function Home() {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section ref={howItWorksRef} className="relative z-10 px-6 py-16 md:py-32 bg-white/60 backdrop-blur-xl border-y border-slate-100">
-        <div className="max-w-7xl mx-auto">
+      <section ref={howItWorksRef} className="relative z-10 py-16 md:py-32 bg-white/60 backdrop-blur-xl border-y border-slate-100 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12 md:mb-20">
             <h2 className="text-[clamp(1.5rem,4vw,3.5rem)] font-black text-slate-900 mb-4 md:mb-6 leading-tight">How TrichoGuard Works</h2>
             <div className="w-16 md:w-24 h-1.5 md:h-2 bg-gradient-to-r from-teal-500 to-blue-500 mx-auto rounded-full"></div>
@@ -103,9 +103,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          <div className="flex lg:grid lg:grid-cols-4 gap-6 md:gap-8 overflow-x-auto lg:overflow-visible pb-8 lg:pb-0 -mx-6 px-6 snap-x snap-mandatory no-scrollbar">
             {steps.map((step, i) => (
-              <div key={i} className="group p-6 md:p-8 rounded-[30px] md:rounded-[40px] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:border-teal-100 transition-all duration-500 flex flex-col items-center text-center">
+              <div key={i} className="min-w-[280px] sm:min-w-[320px] lg:min-w-0 snap-center group p-6 md:p-8 rounded-[30px] md:rounded-[40px] bg-white border border-slate-100 shadow-sm hover:shadow-2xl hover:border-teal-100 transition-all duration-500 flex flex-col items-center text-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-[20px] md:rounded-[30px] bg-slate-50 flex items-center justify-center text-3xl md:text-4xl mb-6 md:mb-8 group-hover:scale-110 group-hover:bg-teal-50 transition-all duration-500">
                   {step.icon}
                 </div>
@@ -113,6 +113,85 @@ export default function Home() {
                 <p className="text-sm md:text-base text-slate-500 leading-relaxed">{step.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WHY CHOOSE TRICHOGUARD */}
+      <section className="relative z-10 px-6 py-20 md:py-40">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-24 items-center">
+            
+            <div className="space-y-6 md:space-y-10">
+              <div className="inline-block px-4 py-2 text-xs font-bold tracking-widest text-blue-600 bg-blue-50 rounded-full uppercase">
+                The Science of Prevention
+              </div>
+              <h2 className="text-[clamp(1.5rem,4vw,3.5rem)] font-black text-slate-900 leading-[1.1]">
+                Why Choose <br />
+                <span className="text-teal-600">TrichoGuard?</span>
+              </h2>
+              <p className="text-slate-600 text-lg md:text-xl max-w-xl leading-relaxed">
+                Existing solutions only treat hair loss when it's visible. We use AI vision to catch changes before you notice them.
+              </p>
+              
+              <div className="space-y-6 pt-4">
+                {[
+                  { t: "Precision AI Vision", d: "Trained on thousands of macroscopic hair density patterns for clinical-grade detection.", i: "🔬" },
+                  { t: "Lifestyle Integration", d: "Your habits affect your hair. We sync your data for truly personalized health scoring.", i: "📱" },
+                  { t: "Growth-First Action Plan", d: "Move beyond 'worrying' with medical-grade prevention tips and tracking.", i: "🌱" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex gap-4 md:gap-6 group">
+                    <div className="shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-xl md:text-2xl group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                      {item.i}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 md:text-lg">{item.t}</h4>
+                      <p className="text-slate-500 text-sm md:text-base">{item.d}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 bg-teal-200/20 blur-[100px] rounded-full scale-125 animate-pulse"></div>
+              <div className="relative bg-white rounded-[40px] p-8 md:p-12 shadow-2xl border border-white">
+                <div className="space-y-8">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-6">
+                    <span className="text-slate-400 font-medium font-mono text-sm tracking-tighter">AI VISION_ENGINE v4.2</span>
+                    <div className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full animate-pulse">REAL-TIME PROCESSING</div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full w-[88%] bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"></div>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-slate-500">
+                      <span>FOLLICLE DENSITY ACCURACY</span>
+                      <span className="text-teal-600">92.4%</span>
+                    </div>
+
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full w-[94%] bg-gradient-to-r from-teal-500 to-blue-500 rounded-full"></div>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold text-slate-500">
+                      <span>EARLY SIGNAL DETECTION</span>
+                      <span className="text-teal-600">94.1%</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                    <p className="text-slate-400 text-xs font-mono leading-relaxed">
+                      [INFO] INITIALIZING NEURAL FUSION... <br />
+                      [INFO] LOADING DATASET_V2... <br />
+                      [OK] SCALP PATTERN MATCHING ACTIVE <br />
+                      [OK] LIFESTYLE CORRELATION SYNCED
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
