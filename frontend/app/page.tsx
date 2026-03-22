@@ -63,17 +63,17 @@ export default function Home() {
               Specialized deep learning for early detection and personalized prevention strategies.
             </p>
 
-            <div className="mt-6 md:mt-12 flex flex-row gap-3 md:gap-6 flex-wrap">
+            <div className="mt-6 md:mt-12 flex flex-col sm:flex-row gap-3 md:gap-6 w-full sm:w-auto">
               <Link
                 href="/predict"
-                className="px-[clamp(1rem,3vw,2.5rem)] py-[clamp(0.6rem,1.5vw,1.25rem)] rounded-2xl md:rounded-3xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-bold shadow-xl shadow-teal-300/20 hover:scale-105 active:scale-95 transition-all duration-300 text-center text-[clamp(0.8rem,1.2vw,1rem)]"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl md:rounded-3xl bg-gradient-to-r from-teal-500 to-blue-600 text-white font-bold shadow-xl shadow-teal-300/20 hover:scale-105 active:scale-95 transition-all duration-300 text-center text-sm md:text-base"
               >
                 Scan Now →
               </Link>
 
               <button 
                 onClick={scrollToHowItWorks}
-                className="px-6 md:px-10 py-3 md:py-5 rounded-2xl md:rounded-3xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-white hover:border-teal-500 hover:text-teal-600 hover:shadow-lg transition-all duration-300 text-sm md:text-base hidden sm:block"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl md:rounded-3xl border-2 border-slate-200 text-slate-800 font-bold hover:bg-white hover:border-teal-500 hover:text-teal-600 hover:shadow-lg transition-all duration-300 text-center text-sm md:text-base"
               >
                 Explore Tech
               </button>
@@ -136,9 +136,9 @@ export default function Home() {
               
               <div className="space-y-6 pt-4">
                 {[
-                  { t: "Precision AI Vision", d: "Trained on thousands of macroscopic hair density patterns for clinical-grade detection.", i: "🔬" },
-                  { t: "Lifestyle Integration", d: "Your habits affect your hair. We sync your data for truly personalized health scoring.", i: "📱" },
-                  { t: "Growth-First Action Plan", d: "Move beyond 'worrying' with medical-grade prevention tips and tracking.", i: "🌱" }
+                  { t: "See the Invisible", d: "Detect hair thinning patterns months before they become visible to the human eye.", i: "🔬" },
+                  { t: "Tailored to You", d: "Get advice that actually works because it's based on your sleep, stress, and unique habits.", i: "📱" },
+                  { t: "Stop the Guesswork", d: "Stop worrying and start acting with a clear, medically-backed preservation roadmap.", i: "🌱" }
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-4 md:gap-6 group">
                     <div className="shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-xl md:text-2xl group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
@@ -158,8 +158,8 @@ export default function Home() {
               <div className="relative bg-white rounded-[40px] p-8 md:p-12 shadow-2xl border border-white">
                 <div className="space-y-8">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-6">
-                    <span className="text-slate-400 font-medium font-mono text-sm tracking-tighter">AI VISION_ENGINE v4.2</span>
-                    <div className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full animate-pulse">REAL-TIME PROCESSING</div>
+                    <span className="text-slate-400 font-medium font-mono text-sm tracking-tighter">AI_HAIR_ANALYZER_v1.0</span>
+                    <div className="px-3 py-1 bg-teal-100 text-teal-700 text-[10px] font-bold rounded-full animate-pulse uppercase tracking-wider">SCANNING_ACCURACY_STABLE</div>
                   </div>
                   
                   <div className="space-y-4">
@@ -182,10 +182,10 @@ export default function Home() {
 
                   <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
                     <p className="text-slate-400 text-xs font-mono leading-relaxed">
-                      [INFO] INITIALIZING NEURAL FUSION... <br />
-                      [INFO] LOADING DATASET_V2... <br />
-                      [OK] SCALP PATTERN MATCHING ACTIVE <br />
-                      [OK] LIFESTYLE CORRELATION SYNCED
+                      [OK] SYNCING_LIFESTYLE_DATA... <br />
+                      [OK] ANALYZING_FOLLICLE_HEALTH... <br />
+                      [OK] GENERATING_ACTION_PLAN... <br />
+                      [OK] SYSTEM_OPTIMIZED
                     </p>
                   </div>
                 </div>
