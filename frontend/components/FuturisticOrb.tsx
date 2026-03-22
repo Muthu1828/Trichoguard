@@ -25,58 +25,60 @@ export default function FuturisticOrb() {
 
       {/* PARTICLES */}
       <div className="absolute w-full h-full pointer-events-none">
-        <div className="w-2 h-2 bg-teal-300 rounded-full absolute top-20 left-20 animate-ping opacity-50" />
-        <div className="w-2 h-2 bg-blue-300 rounded-full absolute bottom-32 right-24 animate-pulse opacity-50" />
+        <div className="w-[1.5%] h-[1.5%] bg-teal-300 rounded-full absolute top-[15%] left-[15%] animate-ping opacity-50" />
+        <div className="w-[1.5%] h-[1.5%] bg-blue-300 rounded-full absolute bottom-[25%] right-[20%] animate-pulse opacity-50" />
       </div>
 
       {/* ORBIT LINES */}
-      <svg viewBox="0 0 520 520" className="absolute w-full h-full">
-        <circle cx="260" cy="260" r="200" stroke="rgba(0,0,0,0.08)" strokeWidth="1" fill="none" />
-        <circle cx="260" cy="260" r="150" stroke="rgba(0,0,0,0.05)" strokeWidth="1" fill="none" />
-      </svg>
+      <div className="absolute w-full h-full">
+        <svg viewBox="0 0 520 520" className="w-full h-full opacity-20">
+          <circle cx="260" cy="260" r="200" stroke="currentColor" strokeWidth="1" fill="none" className="text-slate-400" />
+          <circle cx="260" cy="260" r="150" stroke="currentColor" strokeWidth="1" fill="none" className="text-slate-400" />
+        </svg>
+      </div>
 
-      {/* ORBITING ICONS (OUTSIDE MAIN ORB) */}
-      <div className="absolute w-full h-full animate-orbit">
+      {/* ORBITING ICONS (RELATIVE TO CONTAINER) */}
+      <div className="absolute w-[80%] h-[80%] animate-orbit">
 
         {/* TOP */}
-        <div className="absolute left-1/2 top-[40px] -translate-x-1/2">
-          <div className="animate-counter-orbit bg-white shadow-lg p-4 rounded-full">
-            <Brain className="w-6 h-6 text-purple-500" />
+        <div className="absolute left-1/2 top-0 -translate-x-1/2">
+          <div className="animate-counter-orbit bg-white shadow-lg p-[10%] rounded-full">
+            <Brain className="w-[1.2em] h-[1.2em] text-purple-500" />
           </div>
         </div>
 
         {/* RIGHT */}
-        <div className="absolute right-[40px] top-1/2 -translate-y-1/2">
-          <div className="animate-counter-orbit bg-white shadow-lg p-4 rounded-full">
-            <TrendingUp className="w-6 h-6 text-green-500" />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2">
+          <div className="animate-counter-orbit bg-white shadow-lg p-[10%] rounded-full">
+            <TrendingUp className="w-[1.2em] h-[1.2em] text-green-500" />
           </div>
         </div>
 
         {/* BOTTOM */}
-        <div className="absolute left-1/2 bottom-[40px] -translate-x-1/2">
-          <div className="animate-counter-orbit bg-white shadow-lg p-4 rounded-full">
-            <HeartPulse className="w-6 h-6 text-red-400" />
+        <div className="absolute left-1/2 bottom-0 -translate-x-1/2">
+          <div className="animate-counter-orbit bg-white shadow-lg p-[10%] rounded-full">
+            <HeartPulse className="w-[1.2em] h-[1.2em] text-red-400" />
           </div>
         </div>
 
         {/* LEFT */}
-        <div className="absolute left-[40px] top-1/2 -translate-y-1/2">
-          <div className="animate-counter-orbit bg-white shadow-lg p-4 rounded-full">
-            <Activity className="w-6 h-6 text-blue-500" />
+        <div className="absolute left-0 top-1/2 -translate-y-1/2">
+          <div className="animate-counter-orbit bg-white shadow-lg p-[10%] rounded-full">
+            <Activity className="w-[1.2em] h-[1.2em] text-blue-500" />
           </div>
         </div>
 
       </div>
 
       {/* CENTER GLOW */}
-      <div className="absolute w-[320px] h-[320px] rounded-full bg-gradient-to-br from-blue-400 to-teal-400 blur-3xl opacity-30" />
+      <div className="absolute w-[60%] h-[60%] rounded-full bg-gradient-to-br from-blue-400 to-teal-400 blur-[20%] opacity-30" />
 
-      {/* MAIN ORB (CENTER ONLY TILTS) */}
+      {/* MAIN ORB */}
       <div
         ref={orbRef}
-        className="absolute w-[260px] h-[260px] rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center shadow-xl transition-transform duration-200"
+        className="absolute w-[50%] h-[50%] rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center shadow-2xl transition-transform duration-200"
       >
-        <div className="w-[200px] h-[200px] rounded-full bg-white/30 backdrop-blur-xl border border-white/40 flex items-center justify-center relative overflow-hidden">
+        <div className="w-[85%] h-[85%] rounded-full bg-white/30 backdrop-blur-xl border border-white/40 flex items-center justify-center relative overflow-hidden">
 
           {/* LIGHT SWEEP */}
           <div className="absolute w-full h-full bg-gradient-to-tr from-transparent via-white/40 to-transparent rotate-45 animate-sweep" />
