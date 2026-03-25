@@ -10,6 +10,7 @@ export default function AnalyzePage() {
   const [step, setStep] = useState<1 | 2>(1)
   const [image, setImage] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [loadingMessage, setLoadingMessage] = useState("AI Vision Engine is identifying hair patterns")
   const [errorDetails, setErrorDetails] = useState<string | null>(null)
   
   // Camera State
@@ -22,6 +23,21 @@ export default function AnalyzePage() {
   // Auto-scroll to top when step changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
+    
+    // WAKE UP BACKEND EARLY
+    const wakeUpServer = async () => {
+      try {
+        const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
+          ? "http://127.0.0.1:8001" 
+          : "https://trichoguard-1.onrender.com";
+        console.log("DEBUG: Sending wake-up signal to:", apiUrl);
+        // Head request is lighter for waking up
+        await fetch(apiUrl, { method: "HEAD", mode: "no-cors" }).catch(() => {});
+      } catch (e) {
+        console.log("Wake-up signal suppressed");
+      }
+    };
+    wakeUpServer();
   }, [step])
 
   const [formData, setFormData] = useState({
@@ -144,8 +160,11 @@ export default function AnalyzePage() {
     };
 
     try {
+      setLoadingMessage("Compressing visual data...")
       const compressedBlob = await compressImage(image);
       form.append("image", compressedBlob, "scalp.jpg");
+      
+      // ... (form appending remains same)
       form.append("age", formData.age)
       form.append("gender", formData.gender)
       form.append("stress", formData.stress.toString())
@@ -158,14 +177,23 @@ export default function AnalyzePage() {
       form.append("drinking", formData.drinking)
       form.append("familyHistory", formData.familyHistory)
 
+      setLoadingMessage("Waking up AI Engine (this may take 30s)...")
+      
       const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
         ? "http://127.0.0.1:8001" 
         : "https://trichoguard-1.onrender.com";
+        
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
         body: form
       })
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
+      }
+
+      setLoadingMessage("Parsing neural results...")
       const data = await response.json()
       
       // Save data to session storage to pass to results page
@@ -177,8 +205,13 @@ export default function AnalyzePage() {
 
     } catch (error: any) {
       console.error(error)
-      setErrorDetails(error.message || "Failed to connect to AI server")
-      alert(`Backend connection failed: ${error.message || "Check your internet"}`)
+      const isTimeout = error.message?.includes("failed to fetch") || error.message?.includes("NetworkError");
+      const msg = isTimeout 
+        ? "AI Server is taking too long to wake up. Please try again in 10 seconds."
+        : error.message || "Failed to connect to AI server";
+      
+      setErrorDetails(msg)
+      alert(`Backend Status: ${msg}`)
     } finally {
       setIsAnalyzing(false)
     }
@@ -192,7 +225,7 @@ export default function AnalyzePage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white">
           <div className="w-20 h-20 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(20,184,166,0.3)]"></div>
           <h2 className="text-3xl font-bold mb-2">Analyzing Scalp...</h2>
-          <p className="text-teal-300 animate-pulse text-lg">AI Vision Engine is identifying hair patterns</p>
+          <p className="text-teal-300 animate-pulse text-lg">{loadingMessage}</p>
           <p className="text-xs text-white/50 mt-10 max-w-xs text-center">Processing macroscopic follicle data. This may take up to 30 seconds on free-tier servers.</p>
         </div>
       )}

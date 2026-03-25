@@ -37,7 +37,7 @@ export default function ResultsPage() {
     )
   }
 
-  const overallScore = data.metrics.scalp_health
+  const overallScore = data?.metrics?.scalp_health || 0
 
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans">
@@ -49,10 +49,11 @@ export default function ResultsPage() {
             Your <span className="text-[#0d9488]">Analysis Results</span>
           </h1>
           <p className="text-[#64748b] mt-4 max-w-3xl mx-auto text-lg leading-relaxed">
-            {data.final_stage === "Healthy" && "Your hair and scalp are in excellent condition, showing high density and no signs of hair loss. Your healthy lifestyle habits, particularly low stress and no family history of hair loss, are highly protective."}
-            {data.final_stage === "Mild" && "We detected early signs of mild hair loss or scalp stress. Early intervention through lifestyle changes and topical care can easily reverse this."}
-            {data.final_stage === "Moderate" && "Moderate hair loss patterns detected. It's crucial to address the identified lifestyle factors and consider consulting a dermatologist."}
-            {data.final_stage === "Severe" && "Significant hair loss detected. Immediate medical intervention alongside strict lifestyle corrections is strongly advised."}
+            {data?.final_stage === "Healthy" && "Your hair and scalp are in excellent condition, showing high density and no signs of hair loss. Your healthy lifestyle habits, particularly low stress and no family history of hair loss, are highly protective."}
+            {data?.final_stage === "Mild" && "We detected early signs of mild hair loss or scalp stress. Early intervention through lifestyle changes and topical care can easily reverse this."}
+            {data?.final_stage === "Moderate" && "Moderate hair loss patterns detected. It's crucial to address the identified lifestyle factors and consider consulting a dermatologist."}
+            {data?.final_stage === "Severe" && "Significant hair loss detected. Immediate medical intervention alongside strict lifestyle corrections is strongly advised."}
+            {!["Healthy", "Mild", "Moderate", "Severe"].includes(data?.final_stage) && "Analysis complete. Review your metrics below for personalized insights."}
           </p>
         </div>
 
@@ -106,7 +107,7 @@ export default function ResultsPage() {
             </div>
 
             <p className="text-[#94a3b8] text-center text-sm px-6 leading-relaxed mt-4">
-               {data.final_stage === "Healthy" ? "Normal, healthy scalp and hair with no visible signs of thinning or scalp conditions." : "Visible indicators impacting overall hair density and health."}
+               {data?.final_stage === "Healthy" ? "Normal, healthy scalp and hair with no visible signs of thinning or scalp conditions." : "Visible indicators impacting overall hair density and health."}
             </p>
           </div>
 
@@ -116,10 +117,10 @@ export default function ResultsPage() {
              
              <div className="space-y-8">
                 {[
-                  { label: "Scalp Health", value: data.metrics.scalp_health, color: "bg-[#2dd4bf]" },
-                  { label: "Hair Density", value: data.metrics.hair_density, color: "bg-[#2dd4bf]" },
-                  { label: "Follicle Strength", value: data.metrics.follicle_strength, color: "bg-[#2dd4bf]" },
-                  { label: "Oil Balance", value: data.metrics.oil_balance, color: "bg-[#2dd4bf]" }
+                  { label: "Scalp Health", value: data?.metrics?.scalp_health || 0, color: "bg-[#2dd4bf]" },
+                  { label: "Hair Density", value: data?.metrics?.hair_density || 0, color: "bg-[#2dd4bf]" },
+                  { label: "Follicle Strength", value: data?.metrics?.follicle_strength || 0, color: "bg-[#2dd4bf]" },
+                  { label: "Oil Balance", value: data?.metrics?.oil_balance || 0, color: "bg-[#2dd4bf]" }
                 ].map((metric, i) => (
                   <div key={i}>
                     <div className="flex justify-between mb-3 items-center">
@@ -153,10 +154,10 @@ export default function ResultsPage() {
                  { n: 5, label: "Severe" }
                ].map((s, i) => (
                  <div key={i} className="flex flex-col items-center">
-                   <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-4 shadow-md transition-all duration-500 ${data.stage_number === i ? "bg-[#0d9488] text-white scale-125 border-4 border-white" : "bg-[#f1f5f9] text-[#94a3b8]"}`}>
+                   <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-4 shadow-md transition-all duration-500 ${data?.stage_number === i ? "bg-[#0d9488] text-white scale-125 border-4 border-white" : "bg-[#f1f5f9] text-[#94a3b8]"}`}>
                      {s.n}
                    </div>
-                   <span className={`text-sm font-bold ${data.stage_number === i ? "text-[#0d9488]" : "text-[#94a3b8]"}`}>{s.label}</span>
+                   <span className={`text-sm font-bold ${data?.stage_number === i ? "text-[#0d9488]" : "text-[#94a3b8]"}`}>{s.label}</span>
                  </div>
                ))}
             </div>
@@ -164,7 +165,7 @@ export default function ResultsPage() {
 
           <div className="text-center py-4 bg-[#f0fdfa] rounded-2xl border border-[#ccfbf1]">
              <p className="text-[#0d9488] font-bold text-lg">
-                You are currently at <span className="underline decoration-2 underline-offset-4">Stage {data.stage_number}: {data.final_stage}</span>
+                You are currently at <span className="underline decoration-2 underline-offset-4">Stage {data?.stage_number ?? '?'}: {data?.final_stage || 'Calculating...'}</span>
              </p>
           </div>
         </div>
@@ -182,7 +183,7 @@ export default function ResultsPage() {
              </div>
 
              <div className="space-y-4">
-                {data.reasons.length > 0 ? data.reasons.map((r: string, i: number) => (
+                {data?.reasons?.length > 0 ? data.reasons.map((r: string, i: number) => (
                   <div key={i} className="bg-[#f8fafc] p-6 rounded-2xl border border-gray-100 flex items-start gap-4">
                     <div className="mt-1">
                       <div className="w-2 h-2 rounded-full bg-[#ef4444]"></div>
@@ -208,7 +209,7 @@ export default function ResultsPage() {
              </div>
 
              <div className="space-y-4">
-                {data.positive_factors?.length > 0 ? data.positive_factors.map((p: string, i: number) => (
+                {data?.positive_factors?.length > 0 ? data.positive_factors.map((p: string, i: number) => (
                   <div key={i} className="bg-[#f0fdfa] p-5 rounded-2xl border border-[#ccfbf1] flex items-center gap-4">
                     <CheckCircle2 className="text-[#10b981] w-5 h-5 flex-shrink-0" />
                     <p className="text-[#065f46] text-sm font-medium">{p}</p>
