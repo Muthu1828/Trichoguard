@@ -1,7 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import ApiWarmer from "@/components/ApiWarmer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +22,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-gradient-to-br from-gray-100 to-blue-100 min-h-screen text-gray-800`}
       >
-        <ApiWarmer />
         <Navbar />
         {children}
       </body>

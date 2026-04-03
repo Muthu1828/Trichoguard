@@ -20,73 +20,7 @@ export default function AnalyzePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   
-  // Real Server Status State (Now background-only)
-  const [serverStatus, setServerStatus] = useState<"Active" | "Checking" | "Inactive">("Active") // Default to Active for optimistic UX
   
-  // Auto-scroll to top when step changes
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-    
-    // SMART API DISCOVERY & RACING
-    const candidates = [
-      process.env.NEXT_PUBLIC_API_URL,
-      "https://trichoguard.onrender.com",
-      "https://trichoguard-1.onrender.com",
-      "http://127.0.0.1:8004"
-    ].filter(Boolean) as string[];
-
-    // REAL HEALTH CHECK & FAST RACING
-    const checkServer = async () => {
-      // 0. Check Session Cache first for speed
-      const cachedUrl = sessionStorage.getItem("active_api_url");
-      if (cachedUrl && serverStatus !== "Active") {
-         try {
-           const res = await fetch(cachedUrl, { method: "GET" });
-           if (res.ok) {
-             setServerStatus("Active");
-             return;
-           }
-         } catch (e) {}
-      }
-
-      setServerStatus("Checking");
-      
-      // 1. Race all candidates
-      const race = candidates.map(async (url) => {
-        try {
-          const controller = new AbortController();
-          const id = setTimeout(() => controller.abort(), 5000); // 5s timeout for racing
-          
-          const response = await fetch(url, { method: "GET", signal: controller.signal });
-          clearTimeout(id);
-          
-          if (response.ok) {
-            sessionStorage.setItem("active_api_url", url);
-            return url;
-          }
-        } catch (e) {
-          // If fail, still try a wake-up signal (background)
-          fetch(url, { method: "HEAD", mode: "no-cors" }).catch(() => {});
-        }
-        throw new Error("fail");
-      });
-
-      try {
-        const winner = await Promise.any(race);
-        if (winner) setServerStatus("Active");
-      } catch (e) {
-        setServerStatus("Inactive");
-      }
-    };
-    
-    checkServer();
-    // Faster re-check (5s) while inactive to catch the wake-up
-    const interval = setInterval(() => {
-      if (serverStatus !== "Active") checkServer();
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [step, serverStatus === "Active"])
 
   const [formData, setFormData] = useState({
     age: "",
@@ -228,13 +162,14 @@ export default function AnalyzePage() {
       setLoadingMessage("Waking up AI Engine (this may take 30s)...")
       
       const getApiUrl = () => {
-        const cached = sessionStorage.getItem("active_api_url");
-        if (cached) return cached;
-        if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-        if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
-           return "https://trichoguard.onrender.com"; // Fallback primary
+        if (typeof window !== "undefined") {
+          // Use development environment ONLY if on localhost
+          if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+            return "http://127.0.0.1:8004";
+          }
         }
-        return "http://127.0.0.1:8004";
+        // Always prefer Environment Variable or direct Production URL
+        return process.env.NEXT_PUBLIC_API_URL || "https://trichoguard.onrender.com";
       };
 
       const apiUrl = getApiUrl();
