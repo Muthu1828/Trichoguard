@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { X, Camera, RefreshCw, Check } from "lucide-react"
+import { X, Camera, RefreshCw, Check, Upload } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export default function AnalyzePage() {
@@ -20,56 +20,70 @@ export default function AnalyzePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   
-  // Real Server Status State
-  const [serverStatus, setServerStatus] = useState<"Checking" | "Active" | "Inactive">("Checking")
+  // Real Server Status State (Now background-only)
+  const [serverStatus, setServerStatus] = useState<"Active" | "Checking" | "Inactive">("Active") // Default to Active for optimistic UX
   
   // Auto-scroll to top when step changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
     
-    // SMART API DISCOVERY
-    const getApiUrl = () => {
-      // 1. Manual Override (Vercel Env)
-      if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-      
-      // 2. Production Auto-Guess
-      if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
-         // Guessing based on common Render naming patterns if not provided
-         return "https://trichoguard-1.onrender.com"; 
-      }
-      
-      // 3. Local Development Fallback
-      return "http://127.0.0.1:8004";
-    };
+    // SMART API DISCOVERY & RACING
+    const candidates = [
+      process.env.NEXT_PUBLIC_API_URL,
+      "https://trichoguard.onrender.com",
+      "https://trichoguard-1.onrender.com",
+      "http://127.0.0.1:8004"
+    ].filter(Boolean) as string[];
 
-    const apiUrl = getApiUrl();
-    
-    // REAL HEALTH CHECK & WAKE UP
+    // REAL HEALTH CHECK & FAST RACING
     const checkServer = async () => {
-      try {
-        setServerStatus("Checking")
-        console.log("DEBUG: Checking server health at:", apiUrl);
-        
-        // Try to fetch the health endpoint
-        const response = await fetch(apiUrl, { method: "GET" })
-        if (response.ok) {
-          setServerStatus("Active")
-        } else {
-          setServerStatus("Inactive")
+      // 0. Check Session Cache first for speed
+      const cachedUrl = sessionStorage.getItem("active_api_url");
+      if (cachedUrl && serverStatus !== "Active") {
+         try {
+           const res = await fetch(cachedUrl, { method: "GET" });
+           if (res.ok) {
+             setServerStatus("Active");
+             return;
+           }
+         } catch (e) {}
+      }
+
+      setServerStatus("Checking");
+      
+      // 1. Race all candidates
+      const race = candidates.map(async (url) => {
+        try {
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 5000); // 5s timeout for racing
+          
+          const response = await fetch(url, { method: "GET", signal: controller.signal });
+          clearTimeout(id);
+          
+          if (response.ok) {
+            sessionStorage.setItem("active_api_url", url);
+            return url;
+          }
+        } catch (e) {
+          // If fail, still try a wake-up signal (background)
+          fetch(url, { method: "HEAD", mode: "no-cors" }).catch(() => {});
         }
+        throw new Error("fail");
+      });
+
+      try {
+        const winner = await Promise.any(race);
+        if (winner) setServerStatus("Active");
       } catch (e) {
-        console.log("DEBUG: Server health check failed, likely cold start or port mismatch.");
-        setServerStatus("Inactive")
-        // Still try a wake-up signal (HEAD request)
-        fetch(apiUrl, { method: "HEAD", mode: "no-cors" }).catch(() => {});
+        setServerStatus("Inactive");
       }
     };
     
     checkServer();
-    // Re-check every 15 seconds if inactive
+    // Faster re-check (5s) while inactive to catch the wake-up
     const interval = setInterval(() => {
       if (serverStatus !== "Active") checkServer();
-    }, 15000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [step, serverStatus === "Active"])
@@ -214,9 +228,11 @@ export default function AnalyzePage() {
       setLoadingMessage("Waking up AI Engine (this may take 30s)...")
       
       const getApiUrl = () => {
+        const cached = sessionStorage.getItem("active_api_url");
+        if (cached) return cached;
         if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
         if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
-           return "https://trichoguard-1.onrender.com"; 
+           return "https://trichoguard.onrender.com"; // Fallback primary
         }
         return "http://127.0.0.1:8004";
       };
@@ -293,19 +309,6 @@ export default function AnalyzePage() {
         )}
       </div>
 
-      {/* QUICK STATUS INDICATOR */}
-      <div className="max-w-3xl mx-auto mb-6 flex justify-end">
-        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs font-medium text-gray-500 shadow-sm border border-gray-100">
-          <div className={`w-2 h-2 rounded-full ${
-            serverStatus === "Active" ? "bg-green-500 animate-pulse" : 
-            serverStatus === "Checking" ? "bg-amber-400 animate-bounce" : "bg-red-400"
-          }`}></div>
-          AI Server Link: <span className={
-            serverStatus === "Active" ? "text-teal-600 font-bold" : 
-            serverStatus === "Checking" ? "text-amber-600" : "text-red-600"
-          }>{serverStatus}</span>
-        </div>
-      </div>
 
       <div className={`max-w-6xl mx-auto w-full ${step === 2 ? "grid grid-cols-1 lg:grid-cols-2 gap-10 items-start" : "flex flex-col items-center"}`}>
         
@@ -316,7 +319,7 @@ export default function AnalyzePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <label className="cursor-pointer border-2 border-dashed border-gray-300 rounded-2xl p-10 block hover:bg-gray-50 transition-all hover:border-teal-500 group">
                   <div className="mb-4 flex justify-center text-gray-400 group-hover:text-teal-500 transition-colors">
-                    <RefreshCw size={48} className="animate-spin text-teal-500" />
+                    <Upload size={48} />
                   </div>
                   <p className="text-gray-600 font-semibold mb-2">Upload From Device</p>
                   <p className="text-gray-400 text-xs text-center">Select an existing photo</p>
@@ -685,17 +688,13 @@ export default function AnalyzePage() {
 
             </div>
 
-            {/* ANALYZE BUTTON */}
+            {/* ANALYZE BUTTON (Always Ready) */}
             <div className="pb-12 lg:pb-0">
               <button
                 onClick={handleAnalyze}
-                className={`w-full py-5 rounded-2xl text-lg font-bold transition-all shadow-xl hover:scale-[1.02] active:scale-95 ${
-                  serverStatus === "Active" 
-                    ? "bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-teal-200/50" 
-                    : "bg-gray-400 text-gray-200 cursor-not-allowed opacity-80"
-                }`}
+                className="w-full py-5 rounded-2xl text-lg font-bold transition-all shadow-xl bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-teal-200/50 hover:scale-[1.02] active:scale-95"
               >
-                {serverStatus === "Active" ? "Analyze My Hair Health →" : "Waiting for AI Server..."}
+                Analyze My Hair Health →
               </button>
             </div>
 
