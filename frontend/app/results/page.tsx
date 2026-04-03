@@ -4,17 +4,12 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, CheckCircle2, ChevronRight, Info, Download, FileText, ShieldCheck, Microscope } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts"
-import jsPDF from "jspdf"
-import html2canvas from "html2canvas"
+import { AlertTriangle, CheckCircle2, ChevronRight, Info } from "lucide-react"
 
 export default function ResultsPage() {
   const [data, setData] = useState<any>(null)
   const [imageSrc, setImageSrc] = useState<string | null>(null)
-  const [isExporting, setIsExporting] = useState(false)
-  const resultsRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const stored = sessionStorage.getItem("predictionResults")
@@ -26,54 +21,18 @@ export default function ResultsPage() {
     }
 
     if (stored) {
-      try {
-        setData(JSON.parse(stored))
-      } catch (e) {
-        console.error("Failed to parse results", e)
-        router.push("/predict")
-      }
+      setData(JSON.parse(stored))
     }
     if (storedImage) {
       setImageSrc(storedImage)
     }
   }, [router])
 
-  const downloadPDF = async () => {
-    if (!resultsRef.current) return
-    setIsExporting(true)
-    try {
-      const canvas = await html2canvas(resultsRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#f8fafc"
-      })
-      const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF("p", "mm", "a4")
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
-      
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
-      pdf.save(`TrichoGuard_Report_${new Date().toLocaleDateString()}.pdf`)
-    } catch (error) {
-      console.error("PDF generation failed", error)
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900 flex-col gap-6 text-white">
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-          className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(20,184,166,0.5)]"
-        ></motion.div>
-        <div className="text-center">
-          <p className="text-2xl font-bold tracking-tight">Generating Your Bio-Report</p>
-          <p className="text-slate-400 mt-2">Correlating macroscopic data points...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        <p className="text-gray-500">Processing your analysis...</p>
       </div>
     )
   }
@@ -82,157 +41,103 @@ export default function ResultsPage() {
 
   return (
     <div className="bg-[#f8fafc] min-h-screen font-sans">
-        {/* TOP BAR / EXPORT */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-          <div className="text-center md:text-left">
-            <h1 className="text-[42px] font-bold text-[#1e293b] flex items-center justify-center md:justify-start gap-3">
-              Diagnostic <span className="text-[#0d9488]">Bio-Report</span>
-            </h1>
-            <p className="text-[#64748b] mt-2 text-lg">AI-Driven Follicle & Scalp Analysis</p>
-          </div>
-          <button 
-            onClick={downloadPDF}
-            disabled={isExporting}
-            className="flex items-center gap-3 bg-white text-[#1e293b] border border-slate-200 px-6 py-3 rounded-2xl font-bold shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isExporting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-            Download Professional PDF
-          </button>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        
+        {/* HEADER */}
+        <div className="text-center mb-12">
+          <h1 className="text-[42px] font-bold text-[#1e293b] flex items-center justify-center gap-3">
+            Your <span className="text-[#0d9488]">Analysis Results</span>
+          </h1>
+          <p className="text-[#64748b] mt-4 max-w-3xl mx-auto text-lg leading-relaxed">
+            {data?.final_stage === "Healthy" && "Your hair and scalp are in excellent condition, showing high density and no signs of hair loss. Your healthy lifestyle habits, particularly low stress and no family history of hair loss, are highly protective."}
+            {data?.final_stage === "Mild" && "We detected early signs of mild hair loss or scalp stress. Early intervention through lifestyle changes and topical care can easily reverse this."}
+            {data?.final_stage === "Moderate" && "Moderate hair loss patterns detected. It's crucial to address the identified lifestyle factors and consider consulting a dermatologist."}
+            {data?.final_stage === "Severe" && "Significant hair loss detected. Immediate medical intervention alongside strict lifestyle corrections is strongly advised."}
+            {!["Healthy", "Mild", "Moderate", "Severe"].includes(data?.final_stage) && "Analysis complete. Review your metrics below for personalized insights."}
+          </p>
         </div>
 
-        <div ref={resultsRef} className="space-y-12">
-          {/* MAIN GRID */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          
+          {/* OVERALL SCORE PANEL */}
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col items-center">
+            <h2 className="text-xl font-bold text-[#1e293b] mb-10 text-center">Overall Hair Health Score</h2>
             
-            {/* OVERALL SCORE PANEL */}
-            <motion.div 
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 flex flex-col items-center"
-            >
-              <h2 className="text-xl font-bold text-[#1e293b] mb-10 text-center uppercase tracking-widest text-[12px] text-slate-400">Total Vitality Score</h2>
-              
-              <div className="relative w-64 h-64 mb-10">
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="w-40 h-40 rounded-full border-8 border-white overflow-hidden shadow-2xl">
-                    {imageSrc ? (
-                      <Image src={imageSrc} alt="Scalp" fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <Info className="text-gray-300 w-12 h-12" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="128" cy="128" r="112" className="stroke-slate-50 fill-none" strokeWidth="12" />
-                  <motion.circle
-                    cx="128" cy="128" r="112"
-                    className="stroke-[#0d9488] fill-none"
-                    strokeWidth="16"
-                    strokeDasharray="703"
-                    initial={{ strokeDashoffset: 703 }}
-                    animate={{ strokeDashoffset: 703 - (703 * overallScore) / 100 }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    strokeLinecap="round"
-                  />
-                </svg>
-
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#1e293b] text-white px-6 py-2 rounded-2xl shadow-xl flex flex-col items-center z-20">
-                  <span className="text-4xl font-bold text-teal-400">{overallScore}</span>
-                  <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">BIOMETRIC SCORE</span>
+            <div className="relative w-64 h-64 mb-10">
+              {/* Profile Image Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <div className="w-40 h-40 rounded-full border-8 border-white overflow-hidden shadow-xl">
+                  {imageSrc ? (
+                    <Image src={imageSrc} alt="Scalp" fill className="object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                       <Info className="text-gray-300 w-12 h-12" />
+                    </div>
+                  )}
                 </div>
               </div>
-
-              <p className="text-[#64748b] text-center text-sm px-6 leading-relaxed mt-4 italic font-medium">
-                {data?.final_stage === "Healthy" ? "\"Optimal vascularization and follicle density detected.\"" : "\"Inconsistent nutrient delivery to hair roots identified.\""}
-              </p>
-            </motion.div>
-
-            {/* RADAR CHART PANEL (PROFESSIONAL UPGRADE) */}
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-8 flex flex-col items-center lg:col-span-1"
-            >
-              <h2 className="text-xl font-bold text-[#1e293b] mb-6 uppercase tracking-widest text-[12px] text-slate-400 text-center">Biometric Symmetry</h2>
               
-              <div className="w-full h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
-                    { subject: 'Scalp', A: data?.metrics?.scalp_health || 0, fullMark: 100 },
-                    { subject: 'Density', A: data?.metrics?.hair_density || 0, fullMark: 100 },
-                    { subject: 'Follicle', A: data?.metrics?.follicle_strength || 0, fullMark: 100 },
-                    { subject: 'Oil', A: data?.metrics?.oil_balance || 0, fullMark: 100 },
-                    { subject: 'Lifestyle', A: 100 - (data?.reasons?.length * 10), fullMark: 100 },
-                  ]}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
-                    <Radar
-                      name="Bio-Data"
-                      dataKey="A"
-                      stroke="#0d9488"
-                      fill="#0d9488"
-                      fillOpacity={0.5}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+              {/* Progress Circle */}
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="128"
+                  cy="128"
+                  r="112"
+                  className="stroke-[#f1f5f9] fill-none"
+                  strokeWidth="16"
+                />
+                <circle
+                  cx="128"
+                  cy="128"
+                  r="112"
+                  className="stroke-[#0d9488] fill-none"
+                  strokeWidth="16"
+                  strokeDasharray="703"
+                  strokeDashoffset={703 - (703 * overallScore) / 100}
+                  strokeLinecap="round"
+                  style={{ transition: "stroke-dashoffset 1s ease-in-out" }}
+                />
+              </svg>
+
+              {/* Score Text */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-6 py-2 rounded-2xl shadow-lg border border-gray-50 flex flex-col items-center z-20">
+                <span className="text-4xl font-bold text-[#0d9488]">{overallScore}</span>
+                <span className="text-[10px] text-[#94a3b8] font-bold uppercase tracking-wider">out of 100</span>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4 w-full mt-4">
+            </div>
+
+            <p className="text-[#94a3b8] text-center text-sm px-6 leading-relaxed mt-4">
+               {data?.final_stage === "Healthy" ? "Normal, healthy scalp and hair with no visible signs of thinning or scalp conditions." : "Visible indicators impacting overall hair density and health."}
+            </p>
+          </div>
+
+          {/* DETAILED HEALTH METRICS */}
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-10 lg:col-span-2">
+             <h2 className="text-xl font-bold text-[#1e293b] mb-10">Detailed Health Metrics</h2>
+             
+             <div className="space-y-8">
                 {[
-                  { label: "Scalp", val: data?.metrics?.scalp_health },
-                  { label: "Density", val: data?.metrics?.hair_density }
-                ].map((m, i) => (
-                  <div key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">{m.label}</p>
-                    <p className="text-lg font-bold text-slate-800">{m.val}%</p>
+                  { label: "Scalp Health", value: data?.metrics?.scalp_health || 0, color: "bg-[#2dd4bf]" },
+                  { label: "Hair Density", value: data?.metrics?.hair_density || 0, color: "bg-[#2dd4bf]" },
+                  { label: "Follicle Strength", value: data?.metrics?.follicle_strength || 0, color: "bg-[#2dd4bf]" },
+                  { label: "Oil Balance", value: data?.metrics?.oil_balance || 0, color: "bg-[#2dd4bf]" }
+                ].map((metric, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between mb-3 items-center">
+                      <span className="text-[#475569] font-semibold text-lg">{metric.label}</span>
+                      <span className="font-bold text-[#1e293b]">{metric.value}%</span>
+                    </div>
+                    <div className="w-full bg-[#f1f5f9] rounded-full h-4 overflow-hidden">
+                      <div 
+                        className={`${metric.color} h-full rounded-full transition-all duration-1000`} 
+                        style={{ width: `${metric.value}%` }}
+                      ></div>
+                    </div>
                   </div>
                 ))}
-              </div>
-            </motion.div>
-
-            {/* DETAILED INSIGHTS PANEL */}
-            <motion.div 
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-8"
-            >
-              <h2 className="text-xl font-bold text-[#1e293b] mb-6 uppercase tracking-widest text-[12px] text-slate-400">Scientific Breakdown</h2>
-              
-              <div className="space-y-4">
-                <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100 flex gap-4">
-                  <div className="p-2 bg-white rounded-lg shadow-sm h-fit">
-                    <Microscope className="text-teal-600 w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-1">Neural Pattern Sync</p>
-                    <p className="text-[13px] text-teal-900 leading-relaxed">AI analysis confirms <span className="font-bold">{data?.final_stage}</span> stage characteristics based on macroscopic follicle mapping.</p>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex gap-4">
-                  <div className="p-2 bg-white rounded-lg shadow-sm h-fit">
-                    <ShieldCheck className="text-slate-600 w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">Data Confidence</p>
-                    <p className="text-[13px] text-slate-900 leading-relaxed">Correlation accuracy: <span className="font-bold">92.4%</span> across 18 lifestyle variables.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 pt-6 border-t border-slate-100">
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  <span className="font-bold text-slate-500 uppercase block mb-1">Medical Guidance:</span>
-                  This report is powered by neural-pattern recognition. While highly accurate, it does not replace a clinical biopsy. High-risk indicators should be evaluated by a dermatologist.
-                </p>
-              </div>
-            </motion.div>
+             </div>
           </div>
+        </div>
 
         {/* STAGE ASSESSMENT SECTION */}
         <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 p-12 mb-12">
@@ -317,15 +222,13 @@ export default function ResultsPage() {
 
         </div>
 
-        </div> {/* resultsRef END */}
-
         {/* CTA BUTTON */}
-        <div className="flex justify-center mb-20 mt-12">
+        <div className="flex justify-center mb-20">
           <Link 
             href="/prevention" 
-            className="flex items-center gap-3 bg-gradient-to-r from-[#1e293b] to-[#0d9488] text-white px-10 py-5 rounded-[22px] text-lg font-bold shadow-2xl hover:scale-105 transition-all duration-300 group"
+            className="flex items-center gap-3 bg-gradient-to-r from-[#0d9488] to-[#2563eb] text-white px-10 py-5 rounded-[22px] text-lg font-bold shadow-2xl hover:scale-105 transition-all duration-300 group"
           >
-            Access Prevention Protocol
+            View Prevention Recommendations
             <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
