@@ -16,12 +16,18 @@ export default function ResultsPage() {
     const storedImage = sessionStorage.getItem("uploadedImage")
     
     if (!stored) {
-      router.push("/predict")
+      console.warn("DEBUG: No prediction results in sessionStorage. Redirecting to /predict.");
+      router.push("/predict?error=no_data")
       return
     }
 
     if (stored) {
-      setData(JSON.parse(stored))
+      try {
+        setData(JSON.parse(stored))
+      } catch (e) {
+        console.error("DEBUG: Failed to parse prediction results.", e);
+        router.push("/predict?error=parse_failed")
+      }
     }
     if (storedImage) {
       setImageSrc(storedImage)

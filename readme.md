@@ -31,7 +31,7 @@ If you need to demonstrate how the platform is trained or show the underlying da
 ```bash
 cd backend
 pip install -r requirements.txt
-uvicorn main:app --port 8001 --reload
+uvicorn main:app --port 8004 --reload
 ```
 
 ### 2. Start the Frontend Application

@@ -13,10 +13,6 @@ export default function AnalyzePage() {
   const [loadingMessage, setLoadingMessage] = useState("AI Vision Engine is identifying hair patterns")
   const [errorDetails, setErrorDetails] = useState<string | null>(null)
   
-  // Backend Status Polling
-  const [backendStatus, setBackendStatus] = useState<"connecting" | "loading" | "ready" | "error">("connecting")
-  const [countdown, setCountdown] = useState(15) // Estimated 15s warm-up
-  
   // Camera State
   const [showCamera, setShowCamera] = useState(false)
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment")
@@ -24,60 +20,59 @@ export default function AnalyzePage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   
+  // Real Server Status State
+  const [serverStatus, setServerStatus] = useState<"Checking" | "Active" | "Inactive">("Checking")
+  
   // Auto-scroll to top when step changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
     
-    // BACKEND POLLING LOGIC
-    const checkBackend = async () => {
-      const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
-        ? "http://127.0.0.1:8001" 
-        : "https://trichoguard-1.onrender.com";
+    // SMART API DISCOVERY
+    const getApiUrl = () => {
+      // 1. Manual Override (Vercel Env)
+      if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
       
+      // 2. Production Auto-Guess
+      if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
+         // Guessing based on common Render naming patterns if not provided
+         return "https://trichoguard-1.onrender.com"; 
+      }
+      
+      // 3. Local Development Fallback
+      return "http://127.0.0.1:8004";
+    };
+
+    const apiUrl = getApiUrl();
+    
+    // REAL HEALTH CHECK & WAKE UP
+    const checkServer = async () => {
       try {
-        console.log("DEBUG: Checking backend status at:", apiUrl);
-        const res = await fetch(apiUrl, { 
-          method: "GET",
-          headers: { "Accept": "application/json" }
-        });
+        setServerStatus("Checking")
+        console.log("DEBUG: Checking server health at:", apiUrl);
         
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === "ok") {
-            setBackendStatus("ready");
-          } else {
-            setBackendStatus("loading");
-          }
+        // Try to fetch the health endpoint
+        const response = await fetch(apiUrl, { method: "GET" })
+        if (response.ok) {
+          setServerStatus("Active")
         } else {
-          setBackendStatus("error");
+          setServerStatus("Inactive")
         }
       } catch (e) {
-        console.log("Backend not reachable yet...");
-        setBackendStatus("connecting");
+        console.log("DEBUG: Server health check failed, likely cold start or port mismatch.");
+        setServerStatus("Inactive")
+        // Still try a wake-up signal (HEAD request)
+        fetch(apiUrl, { method: "HEAD", mode: "no-cors" }).catch(() => {});
       }
     };
-
-    // Initial check
-    checkBackend();
-
-    // Poll every 1.5 seconds (was 3s)
-    const interval = setInterval(checkBackend, 1500);
     
-    // Countdown timer for status UI
-    let timer: NodeJS.Timeout;
-    if (backendStatus === 'loading') {
-      timer = setInterval(() => {
-        setCountdown(prev => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-    } else {
-      setCountdown(15);
-    }
+    checkServer();
+    // Re-check every 15 seconds if inactive
+    const interval = setInterval(() => {
+      if (serverStatus !== "Active") checkServer();
+    }, 15000);
 
-    return () => {
-      clearInterval(interval);
-      if (timer) clearInterval(timer);
-    };
-  }, [step, backendStatus])
+    return () => clearInterval(interval);
+  }, [step, serverStatus === "Active"])
 
   const [formData, setFormData] = useState({
     age: "",
@@ -216,39 +211,30 @@ export default function AnalyzePage() {
       form.append("drinking", formData.drinking)
       form.append("familyHistory", formData.familyHistory)
 
-      setLoadingMessage("Communicating with AI Engine...")
+      setLoadingMessage("Waking up AI Engine (this may take 30s)...")
       
-      const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
-        ? "http://127.0.0.1:8001" 
-        : "https://trichoguard-1.onrender.com";
-        
-      const fetchWithRetry = async (attempt = 1): Promise<any> => {
-        const response = await fetch(`${apiUrl}/predict`, {
-          method: "POST",
-          body: form,
-          credentials: "omit" 
-        });
-
-        if (response.status === 503) {
-          if (attempt <= 3) {
-            setLoadingMessage(`AI Engine is almost ready... (Attempt ${attempt}/3)`)
-            // Wait 10 seconds and retry
-            await new Promise(r => setTimeout(r, 10000));
-            return fetchWithRetry(attempt + 1);
-          }
-          throw new Error("AI Engine is taking longer than usual. Please try again in a minute.");
+      const getApiUrl = () => {
+        if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+        if (typeof window !== "undefined" && !window.location.hostname.includes("localhost")) {
+           return "https://trichoguard-1.onrender.com"; 
         }
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
-        }
-
-        return response.json();
+        return "http://127.0.0.1:8004";
       };
 
-      const data = await fetchWithRetry();
-      setLoadingMessage("Finalizing results...")
+      const apiUrl = getApiUrl();
+        
+      const response = await fetch(`${apiUrl}/predict`, {
+        method: "POST",
+        body: form
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
+      }
+
+      setLoadingMessage("Parsing neural results...")
+      const data = await response.json()
       
       // Save data to session storage to pass to results page
       sessionStorage.setItem("predictionResults", JSON.stringify(data))
@@ -258,12 +244,11 @@ export default function AnalyzePage() {
       router.push("/results")
 
     } catch (error: any) {
-      console.error("ANALYSIS_ERROR:", error)
-      let msg = error.message || "Failed to connect to AI server";
-      
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        msg = "Network Error: Could not reach the AI Server. This is usually a CORS or connection issue. Please refresh.";
-      }
+      console.error(error)
+      const isTimeout = error.message?.includes("failed to fetch") || error.message?.includes("NetworkError");
+      const msg = isTimeout 
+        ? "AI Server is taking too long to wake up. Please try again in 10 seconds."
+        : error.message || "Failed to connect to AI server";
       
       setErrorDetails(msg)
       alert(`Backend Status: ${msg}`)
@@ -310,22 +295,15 @@ export default function AnalyzePage() {
 
       {/* QUICK STATUS INDICATOR */}
       <div className="max-w-3xl mx-auto mb-6 flex justify-end">
-        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs font-medium shadow-sm border border-white/20">
-          <div className={`w-2.5 h-2.5 rounded-full ${
-            backendStatus === 'ready' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
-            backendStatus === 'loading' ? 'bg-amber-400 animate-pulse' :
-            backendStatus === 'connecting' ? 'bg-blue-400 animate-pulse' : 'bg-red-500'
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs font-medium text-gray-500 shadow-sm border border-gray-100">
+          <div className={`w-2 h-2 rounded-full ${
+            serverStatus === "Active" ? "bg-green-500 animate-pulse" : 
+            serverStatus === "Checking" ? "bg-amber-400 animate-bounce" : "bg-red-400"
           }`}></div>
-          <span className="text-gray-600">AI Server:</span>
-          <span className={`font-bold ${
-            backendStatus === 'ready' ? 'text-green-600' : 
-            backendStatus === 'loading' ? 'text-amber-600' :
-            backendStatus === 'connecting' ? 'text-blue-600' : 'text-red-600'
-          }`}>
-            {backendStatus === 'ready' ? 'READY' : 
-             backendStatus === 'loading' ? `Warming Up (${countdown}s)...` :
-             backendStatus === 'connecting' ? 'Waking Up...' : 'Offline'}
-          </span>
+          AI Server Link: <span className={
+            serverStatus === "Active" ? "text-teal-600 font-bold" : 
+            serverStatus === "Checking" ? "text-amber-600" : "text-red-600"
+          }>{serverStatus}</span>
         </div>
       </div>
 
@@ -710,20 +688,9 @@ export default function AnalyzePage() {
             {/* ANALYZE BUTTON */}
             <button
               onClick={handleAnalyze}
-              disabled={isAnalyzing || (backendStatus !== 'ready' && backendStatus !== 'loading')}
-              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-4 rounded-xl text-lg font-semibold hover:scale-105 transition shadow-lg disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-3"
+              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-4 rounded-xl text-lg font-semibold hover:scale-105 transition shadow-lg"
             >
-              {isAnalyzing ? (
-                <>
-                  <RefreshCw className="w-6 h-6 animate-spin" />
-                  {loadingMessage}
-                </>
-              ) : (
-                <>
-                  <Check className="w-6 h-6" />
-                  Analyze My Hair Health
-                </>
-              )}
+              Analyze My Hair Health
             </button>
 
           </div>

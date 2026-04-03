@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 gunicorn
-tensorflow-cpu
+tflite-runtime
+scipy
 numpy<2.0.0
 pandas
 joblib

@@ -2,12 +2,12 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import numpy as np
-import tensorflow as tf
+import tflite_runtime.interpreter as tflite
+import gc
 import joblib
 from PIL import Image
 import io
 import os
-import asyncio
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
@@ -28,42 +28,28 @@ image_model = None
 lifestyle_model = None
 
 @app.on_event("startup")
-async def startup_event():
-    # Run heavy model loading in a background thread to avoid blocking the event loop
-    asyncio.create_task(load_models())
-
 async def load_models():
     global image_model, lifestyle_model
     try:
-        print("DEBUG: Clearing backend memory...")
-        tf.keras.backend.clear_session()
+        # Load TFLite Model
+        model_path = os.path.join(BASE_DIR, "scalp_model.tflite")
+        if not os.path.exists(model_path):
+            print(f"ERROR: {model_path} not found!")
+            return
+            
+        print("DEBUG: Loading TFLite Model...")
+        image_model = tflite.Interpreter(model_path=model_path)
+        image_model.allocate_tensors()
         
-        print("DEBUG: Starting non-blocking model load...")
-        
-        # Load Scalp Model
-        scalp_path = os.path.join(BASE_DIR, "scalp_model.h5")
-        if os.path.exists(scalp_path):
-            print(f"DEBUG: Loading scalp model from {scalp_path}...")
-            image_model = await asyncio.to_thread(
-                tf.keras.models.load_model, 
-                scalp_path, 
-                compile=False
-            )
-            print("DEBUG: Scalp model loaded successfully.")
-        else:
-            print(f"ERROR: Scalp model NOT FOUND at {scalp_path}")
-
         # Load Lifestyle Model
         lifestyle_path = os.path.join(BASE_DIR, "lifestyle_model.pkl")
         if os.path.exists(lifestyle_path):
-            print(f"DEBUG: Loading lifestyle model from {lifestyle_path}...")
-            lifestyle_model = await asyncio.to_thread(joblib.load, lifestyle_path)
-            print("DEBUG: Lifestyle model loaded successfully.")
-        else:
-            print(f"ERROR: Lifestyle model NOT FOUND at {lifestyle_path}")
-
+            lifestyle_model = joblib.load(lifestyle_path)
+            print("DEBUG: Lifestyle Model loaded successfully.")
+        
+        print("DEBUG: ALL MODELS LOADED SUCCESSFULLY")
     except Exception as e:
-        print(f"CRITICAL: Model loading failed! {str(e)}")
+        print(f"CRITICAL ERROR LOADING MODELS: {str(e)}")
 
 @app.get("/")
 @app.head("/")
@@ -91,22 +77,39 @@ async def predict(
     drinking: str = Form(...),
     familyHistory: str = Form(...)
 ):
-    if image_model is None or lifestyle_model is None:
-        from fastapi import HTTPException
-        print("DEBUG: Predict called but models are NOT READY.")
-        raise HTTPException(status_code=503, detail="AI models are still initializing. Please wait 10 seconds.")
-
     print(f"DEBUG: New prediction request received. User Age: {age}, Gender: {gender}")
+    
+    if image_model is None or lifestyle_model is None:
+        return {"error": "AI models are still loading or failed to load. Please try again in a few seconds."}
 
-    # -------- IMAGE PREDICTION --------
-    contents = await image.read()
-    img = Image.open(io.BytesIO(contents)).convert("RGB").resize((224, 224))
-    img = np.array(img).astype(np.float32) / 255.0
-    img = np.expand_dims(img, axis=0)
+    # -------- IMAGE PREDICTION (TFLITE) --------
+    try:
+        if image_model is None:
+            return {"error": "AI Engine is waking up. Please try again in 30 seconds."}
 
-    image_pred = image_model.predict(img)
-    image_idx = int(np.argmax(image_pred))
-    image_stage = classes[image_idx]
+        contents = await image.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB").resize((224, 224))
+        img = np.array(img).astype(np.float32) / 255.0
+        img = np.expand_dims(img, axis=0)
+
+        # Interpreter setup
+        input_details = image_model.get_input_details()
+        output_details = image_model.get_output_details()
+        
+        image_model.set_tensor(input_details[0]['index'], img)
+        image_model.invoke()
+        
+        image_pred = image_model.get_tensor(output_details[0]['index'])
+        image_idx = int(np.argmax(image_pred))
+        image_stage = classes[image_idx]
+        print(f"DEBUG: TFLite Prediction: {image_stage}")
+        
+        # Free memory immediately
+        del img
+        gc.collect()
+    except Exception as e:
+        print(f"ERROR: Image prediction failed: {str(e)}")
+        return {"error": f"Analysis Error: {str(e)}"}
 
     # -------- LIFESTYLE PREDICTION --------
     gender_map = {"Female": 0, "Male": 1, "Other": 2}
@@ -131,9 +134,16 @@ async def predict(
         "FamilyHistory": [genetics_map.get(familyHistory, 0)]
     })
 
-    lifestyle_pred = lifestyle_model.predict(lifestyle_data)
-    lifestyle_idx = int(lifestyle_pred[0])
-    lifestyle_stage = classes[lifestyle_idx]
+    try:
+        lifestyle_pred = lifestyle_model.predict(lifestyle_data)
+        lifestyle_idx = int(lifestyle_pred[0])
+        lifestyle_stage = classes[lifestyle_idx]
+        print(f"DEBUG: Lifestyle prediction: {lifestyle_stage} (idx: {lifestyle_idx})")
+    except Exception as e:
+        print(f"ERROR: Lifestyle prediction failed: {str(e)}")
+        # Fallback to image prediction if lifestyle fails
+        lifestyle_idx = image_idx
+        lifestyle_stage = image_stage
 
     # -------- COMBINE RESULT --------
     # image_idx and lifestyle_idx are 0 for Severe, 3 for Healthy
