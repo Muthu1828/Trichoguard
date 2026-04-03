@@ -13,7 +13,12 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://trichoguard.vercel.app",
+        "https://trichoguard.com",
+        "http://localhost:3000",
+        "*"
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,8 +95,13 @@ async def predict(
     hair_care_map = {"Minimal - Shampoo only": 0, "Moderate - Oil & conditioner": 1, "Heavy - Styling products": 2}
     activity_map = {"None": 0, "Light - 1-2 times/week": 1, "Moderate - 3-4 times/week": 2, "Heavy - Daily workout": 3}
 
+    try:
+        final_age = int(age) if age else 25
+    except:
+        final_age = 25
+
     lifestyle_data = pd.DataFrame({
-        "Age": [int(age)],
+        "Age": [final_age],
         "Gender": [gender_map.get(gender, 1)],
         "Stress": [int(stress)],
         "Sleep": [int(sleep)],

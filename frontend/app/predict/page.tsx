@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { X, Camera, RefreshCw, Check } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { AlertTriangle, Camera, Check, ChevronRight, FlipHorizontal, HelpCircle, Info, RefreshCw, Upload, Zap, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function AnalyzePage() {
   const router = useRouter()
@@ -155,14 +156,27 @@ export default function AnalyzePage() {
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.8);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else resolve(new Blob()); // Fallback to avoid '!'
+          }, "image/jpeg", 0.8);
         };
       });
     };
+    // --- VALIDATION AND DEFAULTS ---
+    if (!formData.age || isNaN(parseInt(formData.age))) {
+      setErrorDetails("Please enter a valid age to proceed.")
+      alert("Age is required for a professional analysis.")
+      return
+    }
 
     try {
       setLoadingMessage("Compressing visual data...")
       setLoadingSubMessage("Optimizing image for neural analysis...")
+      if (!image) {
+        setErrorDetails("No image data found. Please capture or upload a scalp photo.")
+        return
+      }
       const compressedBlob = await compressImage(image);
       form.append("image", compressedBlob, "scalp.jpg");
       
@@ -220,7 +234,7 @@ export default function AnalyzePage() {
       
       // Save data to session storage to pass to results page
       sessionStorage.setItem("predictionResults", JSON.stringify(data))
-      sessionStorage.setItem("uploadedImage", image)
+      if (image) sessionStorage.setItem("uploadedImage", image)
       
       // Redirect to results (using Next.js router)
       router.push("/results")
