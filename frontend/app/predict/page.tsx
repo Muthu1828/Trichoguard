@@ -258,7 +258,7 @@ export default function AnalyzePage() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-100 via-blue-100 to-teal-100 min-h-screen py-16 px-6 relative">
+    <div className="bg-gradient-to-br from-gray-100 via-blue-100 to-teal-100 min-h-screen py-16 md:py-24 px-4 md:px-6 relative overflow-y-auto">
       
       {/* LOADING OVERLAY */}
       {isAnalyzing && (
@@ -307,7 +307,7 @@ export default function AnalyzePage() {
         </div>
       </div>
 
-      <div className={`max-w-6xl mx-auto flex flex-col items-center ${step === 2 ? "grid grid-cols-1 lg:grid-cols-2 gap-10 items-stretch" : ""}`}>
+      <div className={`max-w-6xl mx-auto w-full ${step === 2 ? "grid grid-cols-1 lg:grid-cols-2 gap-10 items-start" : "flex flex-col items-center"}`}>
         
         {/* STEP 1: IMAGE UPLOAD / CAMERA */}
         {step === 1 && (
@@ -686,12 +686,18 @@ export default function AnalyzePage() {
             </div>
 
             {/* ANALYZE BUTTON */}
-            <button
-              onClick={handleAnalyze}
-              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-4 rounded-xl text-lg font-semibold hover:scale-105 transition shadow-lg"
-            >
-              Analyze My Hair Health
-            </button>
+            <div className="pb-12 lg:pb-0">
+              <button
+                onClick={handleAnalyze}
+                className={`w-full py-5 rounded-2xl text-lg font-bold transition-all shadow-xl hover:scale-[1.02] active:scale-95 ${
+                  serverStatus === "Active" 
+                    ? "bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-teal-200/50" 
+                    : "bg-gray-400 text-gray-200 cursor-not-allowed opacity-80"
+                }`}
+              >
+                {serverStatus === "Active" ? "Analyze My Hair Health →" : "Waiting for AI Server..."}
+              </button>
+            </div>
 
           </div>
         )}
