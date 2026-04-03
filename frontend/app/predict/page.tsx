@@ -60,8 +60,8 @@ export default function AnalyzePage() {
     // Initial check
     checkBackend();
 
-    // Poll every 3 seconds
-    const interval = setInterval(checkBackend, 3000);
+    // Poll every 1.5 seconds (was 3s)
+    const interval = setInterval(checkBackend, 1500);
     
     // Countdown timer for status UI
     let timer: NodeJS.Timeout;
