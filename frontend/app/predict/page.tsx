@@ -11,6 +11,7 @@ export default function AnalyzePage() {
   const [image, setImage] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("AI Vision Engine is identifying hair patterns")
+  const [loadingSubMessage, setLoadingSubMessage] = useState("Processing macroscopic follicle data...")
   const [errorDetails, setErrorDetails] = useState<string | null>(null)
   
   // Camera State
@@ -161,10 +162,10 @@ export default function AnalyzePage() {
 
     try {
       setLoadingMessage("Compressing visual data...")
+      setLoadingSubMessage("Optimizing image for neural analysis...")
       const compressedBlob = await compressImage(image);
       form.append("image", compressedBlob, "scalp.jpg");
       
-      // ... (form appending remains same)
       form.append("age", formData.age)
       form.append("gender", formData.gender)
       form.append("stress", formData.stress.toString())
@@ -177,23 +178,44 @@ export default function AnalyzePage() {
       form.append("drinking", formData.drinking)
       form.append("familyHistory", formData.familyHistory)
 
-      setLoadingMessage("Waking up AI Engine (this may take 30s)...")
+      setLoadingMessage("Waking up AI Engine...")
+      setLoadingSubMessage("Thawing cold storage layers (this may take 30s)...")
       
       const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
         ? "http://127.0.0.1:8001" 
         : "https://trichoguard-1.onrender.com";
         
+      // Dynamic loading messages for better engagement
+      const messages = [
+        { main: "Analyzing Follicle Density...", sub: "Mapping macroscopic scalp patterns" },
+        { main: "Calculating Growth Ratios...", sub: "Cross-referencing lifestyle factors" },
+        { main: "Assessing Clinical Stage...", sub: "Identifying miniaturization markers" },
+        { main: "Finalizing Health Report...", sub: "Syncing metadata with neural results" }
+      ];
+
+      let msgIndex = 0;
+      const interval = setInterval(() => {
+        if (msgIndex < messages.length) {
+          setLoadingMessage(messages[msgIndex].main);
+          setLoadingSubMessage(messages[msgIndex].sub);
+          msgIndex++;
+        }
+      }, 4000);
+
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
         body: form
       })
 
+      clearInterval(interval);
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
       }
 
-      setLoadingMessage("Parsing neural results...")
+      setLoadingMessage("Syncing Results...")
+      setLoadingSubMessage("Almost there! Preparing your personalized dashboard.")
       const data = await response.json()
       
       // Save data to session storage to pass to results page
@@ -221,14 +243,53 @@ export default function AnalyzePage() {
     <div className="bg-gradient-to-br from-gray-100 via-blue-100 to-teal-100 min-h-screen py-16 px-6 relative">
       
       {/* LOADING OVERLAY */}
+      <AnimatePresence>
       {isAnalyzing && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white">
-          <div className="w-20 h-20 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(20,184,166,0.3)]"></div>
-          <h2 className="text-3xl font-bold mb-2">Analyzing Scalp...</h2>
-          <p className="text-teal-300 animate-pulse text-lg">{loadingMessage}</p>
-          <p className="text-xs text-white/50 mt-10 max-w-xs text-center">Processing macroscopic follicle data. This may take up to 30 seconds on free-tier servers.</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex flex-col items-center justify-center text-white p-6"
+        >
+          <div className="relative mb-12">
+            <div className="w-32 h-32 border-4 border-teal-500/20 rounded-full"></div>
+            <motion.div 
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+              className="absolute inset-0 w-32 h-32 border-t-4 border-teal-500 rounded-full shadow-[0_0_40px_rgba(20,184,166,0.3)]"
+            ></motion.div>
+            <div className="absolute inset-0 flex items-center justify-center">
+               <Zap className="w-10 h-10 text-teal-400 animate-pulse" />
+            </div>
+          </div>
+          
+          <motion.h2 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="text-4xl font-bold mb-4 tracking-tight"
+          >
+            {loadingMessage}
+          </motion.h2>
+          
+          <motion.p 
+            key={loadingSubMessage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-teal-400 font-medium text-xl text-center max-w-sm"
+          >
+            {loadingSubMessage}
+          </motion.p>
+          
+          <div className="mt-16 w-64 h-1 bg-white/10 rounded-full overflow-hidden">
+            <motion.div 
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="w-1/2 h-full bg-gradient-to-r from-transparent via-teal-500 to-transparent"
+            ></motion.div>
+          </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* DYNAMIC HEADER */}
       <div className="text-center mb-12">
