@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
+import { X, Camera, RefreshCw, Check } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { AlertTriangle, Camera, Check, ChevronRight, FlipHorizontal, HelpCircle, Info, RefreshCw, Upload, Zap, X } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 
 export default function AnalyzePage() {
   const router = useRouter()
@@ -12,8 +11,10 @@ export default function AnalyzePage() {
   const [image, setImage] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState("AI Vision Engine is identifying hair patterns")
-  const [loadingSubMessage, setLoadingSubMessage] = useState("Processing macroscopic follicle data...")
   const [errorDetails, setErrorDetails] = useState<string | null>(null)
+  
+  // Backend Status Polling
+  const [backendStatus, setBackendStatus] = useState<"connecting" | "loading" | "ready" | "error">("connecting")
   
   // Camera State
   const [showCamera, setShowCamera] = useState(false)
@@ -26,20 +27,41 @@ export default function AnalyzePage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
     
-    // WAKE UP BACKEND EARLY
-    const wakeUpServer = async () => {
+    // BACKEND POLLING LOGIC
+    const checkBackend = async () => {
+      const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
+        ? "http://127.0.0.1:8001" 
+        : "https://trichoguard-1.onrender.com";
+      
       try {
-        const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
-          ? "http://127.0.0.1:8001" 
-          : "https://trichoguard-1.onrender.com";
-        console.log("DEBUG: Sending wake-up signal to:", apiUrl);
-        // Head request is lighter for waking up
-        await fetch(apiUrl, { method: "HEAD", mode: "no-cors" }).catch(() => {});
+        console.log("DEBUG: Checking backend status at:", apiUrl);
+        const res = await fetch(apiUrl, { 
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === "ok") {
+            setBackendStatus("ready");
+          } else {
+            setBackendStatus("loading");
+          }
+        } else {
+          setBackendStatus("error");
+        }
       } catch (e) {
-        console.log("Wake-up signal suppressed");
+        console.log("Backend not reachable yet...");
+        setBackendStatus("connecting");
       }
     };
-    wakeUpServer();
+
+    // Initial check
+    checkBackend();
+
+    // Poll every 3 seconds
+    const interval = setInterval(checkBackend, 3000);
+    return () => clearInterval(interval);
   }, [step])
 
   const [formData, setFormData] = useState({
@@ -156,30 +178,17 @@ export default function AnalyzePage() {
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx?.drawImage(img, 0, 0, width, height);
-          canvas.toBlob((blob) => {
-            if (blob) resolve(blob);
-            else resolve(new Blob()); // Fallback to avoid '!'
-          }, "image/jpeg", 0.8);
+          canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.8);
         };
       });
     };
-    // --- VALIDATION AND DEFAULTS ---
-    if (!formData.age || isNaN(parseInt(formData.age))) {
-      setErrorDetails("Please enter a valid age to proceed.")
-      alert("Age is required for a professional analysis.")
-      return
-    }
 
     try {
       setLoadingMessage("Compressing visual data...")
-      setLoadingSubMessage("Optimizing image for neural analysis...")
-      if (!image) {
-        setErrorDetails("No image data found. Please capture or upload a scalp photo.")
-        return
-      }
       const compressedBlob = await compressImage(image);
       form.append("image", compressedBlob, "scalp.jpg");
       
+      // ... (form appending remains same)
       form.append("age", formData.age)
       form.append("gender", formData.gender)
       form.append("stress", formData.stress.toString())
@@ -192,59 +201,41 @@ export default function AnalyzePage() {
       form.append("drinking", formData.drinking)
       form.append("familyHistory", formData.familyHistory)
 
-      setLoadingMessage("Waking up AI Engine...")
-      setLoadingSubMessage("Thawing cold storage layers (this may take 30s)...")
+      setLoadingMessage("Communicating with AI Engine...")
       
       const apiUrl = typeof window !== "undefined" && window.location.hostname === "localhost" 
         ? "http://127.0.0.1:8001" 
         : "https://trichoguard-1.onrender.com";
         
-      // Dynamic loading messages for better engagement
-      const messages = [
-        { main: "Analyzing Follicle Density...", sub: "Mapping macroscopic scalp patterns" },
-        { main: "Calculating Growth Ratios...", sub: "Cross-referencing lifestyle factors" },
-        { main: "Assessing Clinical Stage...", sub: "Identifying miniaturization markers" },
-        { main: "Finalizing Health Report...", sub: "Syncing metadata with neural results" }
-      ];
-
-      let msgIndex = 0;
-      const interval = setInterval(() => {
-        if (msgIndex < messages.length) {
-          setLoadingMessage(messages[msgIndex].main);
-          setLoadingSubMessage(messages[msgIndex].sub);
-          msgIndex++;
-        }
-      }, 4000);
-
       const response = await fetch(`${apiUrl}/predict`, {
         method: "POST",
-        body: form
+        body: form,
+        // Ensure credentials if CORS needs them (we set allow_credentials=True in backend now)
+        credentials: "omit" 
       })
 
-      clearInterval(interval);
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
       }
 
-      setLoadingMessage("Syncing Results...")
-      setLoadingSubMessage("Almost there! Preparing your personalized dashboard.")
+      setLoadingMessage("Parsing neural results...")
       const data = await response.json()
       
       // Save data to session storage to pass to results page
       sessionStorage.setItem("predictionResults", JSON.stringify(data))
-      if (image) sessionStorage.setItem("uploadedImage", image)
+      sessionStorage.setItem("uploadedImage", image)
       
       // Redirect to results (using Next.js router)
       router.push("/results")
 
     } catch (error: any) {
-      console.error(error)
-      const isTimeout = error.message?.includes("failed to fetch") || error.message?.includes("NetworkError");
-      const msg = isTimeout 
-        ? "AI Server is taking too long to wake up. Please try again in 10 seconds."
-        : error.message || "Failed to connect to AI server";
+      console.error("ANALYSIS_ERROR:", error)
+      let msg = error.message || "Failed to connect to AI server";
+      
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        msg = "Network Error: Could not reach the AI Server. This is usually a CORS or connection issue. Please refresh.";
+      }
       
       setErrorDetails(msg)
       alert(`Backend Status: ${msg}`)
@@ -257,53 +248,14 @@ export default function AnalyzePage() {
     <div className="bg-gradient-to-br from-gray-100 via-blue-100 to-teal-100 min-h-screen py-16 px-6 relative">
       
       {/* LOADING OVERLAY */}
-      <AnimatePresence>
       {isAnalyzing && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex flex-col items-center justify-center text-white p-6"
-        >
-          <div className="relative mb-12">
-            <div className="w-32 h-32 border-4 border-teal-500/20 rounded-full"></div>
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-              className="absolute inset-0 w-32 h-32 border-t-4 border-teal-500 rounded-full shadow-[0_0_40px_rgba(20,184,166,0.3)]"
-            ></motion.div>
-            <div className="absolute inset-0 flex items-center justify-center">
-               <Zap className="w-10 h-10 text-teal-400 animate-pulse" />
-            </div>
-          </div>
-          
-          <motion.h2 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="text-4xl font-bold mb-4 tracking-tight"
-          >
-            {loadingMessage}
-          </motion.h2>
-          
-          <motion.p 
-            key={loadingSubMessage}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-teal-400 font-medium text-xl text-center max-w-sm"
-          >
-            {loadingSubMessage}
-          </motion.p>
-          
-          <div className="mt-16 w-64 h-1 bg-white/10 rounded-full overflow-hidden">
-            <motion.div 
-              animate={{ x: ["-100%", "100%"] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-              className="w-1/2 h-full bg-gradient-to-r from-transparent via-teal-500 to-transparent"
-            ></motion.div>
-          </div>
-        </motion.div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white">
+          <div className="w-20 h-20 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_30px_rgba(20,184,166,0.3)]"></div>
+          <h2 className="text-3xl font-bold mb-2">Analyzing Scalp...</h2>
+          <p className="text-teal-300 animate-pulse text-lg">{loadingMessage}</p>
+          <p className="text-xs text-white/50 mt-10 max-w-xs text-center">Processing macroscopic follicle data. This may take up to 30 seconds on free-tier servers.</p>
+        </div>
       )}
-      </AnimatePresence>
 
       {/* DYNAMIC HEADER */}
       <div className="text-center mb-12">
@@ -330,9 +282,22 @@ export default function AnalyzePage() {
 
       {/* QUICK STATUS INDICATOR */}
       <div className="max-w-3xl mx-auto mb-6 flex justify-end">
-        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs font-medium text-gray-500 shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          AI Server Link: <span className="text-teal-600">Active</span>
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full text-xs font-medium shadow-sm border border-white/20">
+          <div className={`w-2.5 h-2.5 rounded-full ${
+            backendStatus === 'ready' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 
+            backendStatus === 'loading' ? 'bg-amber-400 animate-pulse' :
+            backendStatus === 'connecting' ? 'bg-blue-400 animate-pulse' : 'bg-red-500'
+          }`}></div>
+          <span className="text-gray-600">AI Server:</span>
+          <span className={`font-bold ${
+            backendStatus === 'ready' ? 'text-green-600' : 
+            backendStatus === 'loading' ? 'text-amber-600' :
+            backendStatus === 'connecting' ? 'text-blue-600' : 'text-red-600'
+          }`}>
+            {backendStatus === 'ready' ? 'READY' : 
+             backendStatus === 'loading' ? 'Warming Up (15s)...' :
+             backendStatus === 'connecting' ? 'Waking Up...' : 'Offline'}
+          </span>
         </div>
       </div>
 
@@ -717,9 +682,25 @@ export default function AnalyzePage() {
             {/* ANALYZE BUTTON */}
             <button
               onClick={handleAnalyze}
-              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-4 rounded-xl text-lg font-semibold hover:scale-105 transition shadow-lg"
+              disabled={isAnalyzing || backendStatus !== 'ready'}
+              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-4 rounded-xl text-lg font-semibold hover:scale-105 transition shadow-lg disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-3"
             >
-              Analyze My Hair Health
+              {isAnalyzing ? (
+                <>
+                  <RefreshCw className="w-6 h-6 animate-spin" />
+                  Analyzing...
+                </>
+              ) : backendStatus === 'ready' ? (
+                <>
+                  <Check className="w-6 h-6" />
+                  Analyze My Hair Health
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-6 h-6 animate-spin" />
+                  {backendStatus === 'loading' ? 'AI Engine Warming Up...' : 'Connecting to AI Server...'}
+                </>
+              )}
             </button>
 
           </div>

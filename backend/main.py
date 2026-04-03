@@ -7,6 +7,7 @@ import joblib
 from PIL import Image
 import io
 import os
+import asyncio
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
@@ -15,11 +16,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://trichoguard.vercel.app",
-        "https://trichoguard.com",
         "http://localhost:3000",
-        "*"
+        "http://127.0.0.1:3000"
     ],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,19 +32,37 @@ image_model = None
 lifestyle_model = None
 
 @app.on_event("startup")
+async def startup_event():
+    # Run heavy model loading in a background thread to avoid blocking the event loop
+    asyncio.create_task(load_models())
+
 async def load_models():
     global image_model, lifestyle_model
     try:
-        print("DEBUG: Loading scalp model (compile=False)...")
-        image_model = tf.keras.models.load_model(
-            os.path.join(BASE_DIR, "scalp_model.h5"), 
-            compile=False
-        )
-        print("DEBUG: Scalp model loaded successfully.")
+        print("DEBUG: Starting non-blocking model load...")
+        
+        # Load Scalp Model
+        scalp_path = os.path.join(BASE_DIR, "scalp_model.h5")
+        if os.path.exists(scalp_path):
+            print(f"DEBUG: Loading scalp model from {scalp_path}...")
+            image_model = await asyncio.to_thread(
+                tf.keras.models.load_model, 
+                scalp_path, 
+                compile=False
+            )
+            print("DEBUG: Scalp model loaded successfully.")
+        else:
+            print(f"ERROR: Scalp model NOT FOUND at {scalp_path}")
 
-        print("DEBUG: Loading lifestyle model...")
-        lifestyle_model = joblib.load(os.path.join(BASE_DIR, "lifestyle_model.pkl"))
-        print("DEBUG: Lifestyle model loaded successfully.")
+        # Load Lifestyle Model
+        lifestyle_path = os.path.join(BASE_DIR, "lifestyle_model.pkl")
+        if os.path.exists(lifestyle_path):
+            print(f"DEBUG: Loading lifestyle model from {lifestyle_path}...")
+            lifestyle_model = await asyncio.to_thread(joblib.load, lifestyle_path)
+            print("DEBUG: Lifestyle model loaded successfully.")
+        else:
+            print(f"ERROR: Lifestyle model NOT FOUND at {lifestyle_path}")
+
     except Exception as e:
         print(f"CRITICAL: Model loading failed! {str(e)}")
 
@@ -74,6 +92,11 @@ async def predict(
     drinking: str = Form(...),
     familyHistory: str = Form(...)
 ):
+    if image_model is None or lifestyle_model is None:
+        from fastapi import HTTPException
+        print("DEBUG: Predict called but models are NOT READY.")
+        raise HTTPException(status_code=503, detail="AI models are still initializing. Please wait 10 seconds.")
+
     print(f"DEBUG: New prediction request received. User Age: {age}, Gender: {gender}")
 
     # -------- IMAGE PREDICTION --------
@@ -95,13 +118,8 @@ async def predict(
     hair_care_map = {"Minimal - Shampoo only": 0, "Moderate - Oil & conditioner": 1, "Heavy - Styling products": 2}
     activity_map = {"None": 0, "Light - 1-2 times/week": 1, "Moderate - 3-4 times/week": 2, "Heavy - Daily workout": 3}
 
-    try:
-        final_age = int(age) if age else 25
-    except:
-        final_age = 25
-
     lifestyle_data = pd.DataFrame({
-        "Age": [final_age],
+        "Age": [int(age)],
         "Gender": [gender_map.get(gender, 1)],
         "Stress": [int(stress)],
         "Sleep": [int(sleep)],
