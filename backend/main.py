@@ -39,6 +39,9 @@ async def startup_event():
 async def load_models():
     global image_model, lifestyle_model
     try:
+        print("DEBUG: Clearing backend memory...")
+        tf.keras.backend.clear_session()
+        
         print("DEBUG: Starting non-blocking model load...")
         
         # Load Scalp Model

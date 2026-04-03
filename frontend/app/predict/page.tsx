@@ -15,6 +15,7 @@ export default function AnalyzePage() {
   
   // Backend Status Polling
   const [backendStatus, setBackendStatus] = useState<"connecting" | "loading" | "ready" | "error">("connecting")
+  const [countdown, setCountdown] = useState(15) // Estimated 15s warm-up
   
   // Camera State
   const [showCamera, setShowCamera] = useState(false)
@@ -61,8 +62,22 @@ export default function AnalyzePage() {
 
     // Poll every 3 seconds
     const interval = setInterval(checkBackend, 3000);
-    return () => clearInterval(interval);
-  }, [step])
+    
+    // Countdown timer for status UI
+    let timer: NodeJS.Timeout;
+    if (backendStatus === 'loading') {
+      timer = setInterval(() => {
+        setCountdown(prev => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    } else {
+      setCountdown(15);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (timer) clearInterval(timer);
+    };
+  }, [step, backendStatus])
 
   const [formData, setFormData] = useState({
     age: "",
@@ -308,7 +323,7 @@ export default function AnalyzePage() {
             backendStatus === 'connecting' ? 'text-blue-600' : 'text-red-600'
           }`}>
             {backendStatus === 'ready' ? 'READY' : 
-             backendStatus === 'loading' ? 'Warming Up (15s)...' :
+             backendStatus === 'loading' ? `Warming Up (${countdown}s)...` :
              backendStatus === 'connecting' ? 'Waking Up...' : 'Offline'}
           </span>
         </div>
@@ -711,7 +726,7 @@ export default function AnalyzePage() {
               ) : (
                 <>
                   <RefreshCw className="w-6 h-6 animate-spin" />
-                  {backendStatus === 'loading' ? 'AI Engine Warming Up...' : 'Connecting to AI Server...'}
+                  {backendStatus === 'loading' ? `AI Engine Warming Up (${countdown}s)...` : 'Connecting to AI Server...'}
                 </>
               )}
             </button>
