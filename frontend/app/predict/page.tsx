@@ -710,23 +710,18 @@ export default function AnalyzePage() {
             {/* ANALYZE BUTTON */}
             <button
               onClick={handleAnalyze}
-              disabled={isAnalyzing || backendStatus !== 'ready'}
+              disabled={isAnalyzing || (backendStatus !== 'ready' && backendStatus !== 'loading')}
               className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-4 rounded-xl text-lg font-semibold hover:scale-105 transition shadow-lg disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-3"
             >
               {isAnalyzing ? (
                 <>
                   <RefreshCw className="w-6 h-6 animate-spin" />
-                  Analyzing...
-                </>
-              ) : backendStatus === 'ready' ? (
-                <>
-                  <Check className="w-6 h-6" />
-                  Analyze My Hair Health
+                  {loadingMessage}
                 </>
               ) : (
                 <>
-                  <RefreshCw className="w-6 h-6 animate-spin" />
-                  {backendStatus === 'loading' ? `AI Engine Warming Up (${countdown}s)...` : 'Connecting to AI Server...'}
+                  <Check className="w-6 h-6" />
+                  Analyze My Hair Health
                 </>
               )}
             </button>
