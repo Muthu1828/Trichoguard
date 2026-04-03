@@ -207,20 +207,33 @@ export default function AnalyzePage() {
         ? "http://127.0.0.1:8001" 
         : "https://trichoguard-1.onrender.com";
         
-      const response = await fetch(`${apiUrl}/predict`, {
-        method: "POST",
-        body: form,
-        // Ensure credentials if CORS needs them (we set allow_credentials=True in backend now)
-        credentials: "omit" 
-      })
+      const fetchWithRetry = async (attempt = 1): Promise<any> => {
+        const response = await fetch(`${apiUrl}/predict`, {
+          method: "POST",
+          body: form,
+          credentials: "omit" 
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
-      }
+        if (response.status === 503) {
+          if (attempt <= 3) {
+            setLoadingMessage(`AI Engine is almost ready... (Attempt ${attempt}/3)`)
+            // Wait 10 seconds and retry
+            await new Promise(r => setTimeout(r, 10000));
+            return fetchWithRetry(attempt + 1);
+          }
+          throw new Error("AI Engine is taking longer than usual. Please try again in a minute.");
+        }
 
-      setLoadingMessage("Parsing neural results...")
-      const data = await response.json()
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server Response Error (${response.status}): ${errorText.substring(0, 100)}`);
+        }
+
+        return response.json();
+      };
+
+      const data = await fetchWithRetry();
+      setLoadingMessage("Finalizing results...")
       
       // Save data to session storage to pass to results page
       sessionStorage.setItem("predictionResults", JSON.stringify(data))
